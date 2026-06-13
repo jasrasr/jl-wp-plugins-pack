@@ -34,10 +34,10 @@ JL Content Tools currently provides:
 
 ```text
 jl-wp-plugins-pack/
-├── jl-content-tools.php
+├── jl-wp-plugins-pack.php
 ├── README.md
 └── includes/
-    └── class-jl-content-tools.php
+    └── class-jl-wp-plugins-pack.php
 ```
 
 ## Required WordPress/Git Updater header
@@ -62,7 +62,7 @@ Use this for the first install on a new site.
 Plugins -> Add New -> Upload Plugin
 ```
 
-3. Upload `jl-content-tools.zip`.
+3. Upload `jl-wp-plugins-pack.zip`.
 4. Activate **JL Content Tools**.
 5. Go to:
 
@@ -79,7 +79,7 @@ Use this if the host gives you SSH access.
 
 ```bash
 cd public_html/wp-content/plugins
-git clone https://github.com/jasrasr/jl-wp-plugins-pack.git jl-content-tools
+git clone https://github.com/jasrasr/jl-wp-plugins-pack.git jl-wp-plugins-pack
 ```
 
 Then activate the plugin from WordPress admin.
@@ -87,7 +87,7 @@ Then activate the plugin from WordPress admin.
 To update later through SSH:
 
 ```bash
-cd public_html/wp-content/plugins/jl-content-tools
+cd public_html/wp-content/plugins/jl-wp-plugins-pack
 git pull
 ```
 
@@ -109,7 +109,7 @@ https://github.com/jasrasr/jl-wp-plugins-pack
 4. Confirm the installed folder is:
 
 ```text
-wp-content/plugins/jl-content-tools
+wp-content/plugins/jl-wp-plugins-pack
 ```
 
 5. Activate **JL Content Tools**.
@@ -118,10 +118,11 @@ wp-content/plugins/jl-content-tools
 ## Recommended GitHub workflow
 
 1. Make changes locally.
-2. Bump the `Version:` value in `jl-content-tools.php`.
-3. Update `JL_CONTENT_TOOLS_VERSION` in `jl-content-tools.php`.
-4. Update this README if behavior changed.
-5. Commit and push:
+2. Bump the `Version:` value in `jl-wp-plugins-pack.php`.
+3. Update `JL_WP_PLUGINS_PACK_VERSION` in `jl-wp-plugins-pack.php`.
+4. Update `CHANGELOG.md`.
+5. Update this README if behavior changed.
+6. Commit and push:
 
 ```bash
 git add .
@@ -129,7 +130,7 @@ git commit -m "Update JL Content Tools"
 git push
 ```
 
-6. Optionally tag the release:
+7. Optionally tag the release:
 
 ```bash
 git tag v1.1.1
@@ -174,19 +175,17 @@ Do not ignore `.agents/` if you use it for shared Codex/agent project instructio
    - Site: https://git-updater.com/
 
 3. Install this Plugin:
-   - WordPress Admin -> Plugins or Appearance -> Themes
+   - WordPress Admin -> Plugins -> Add New, or use Git Updater
    - Or use SSH/Git in the appropriate WordPress folder.
 
 4. Confirm expected install path:
-   - Plugin: /wp-content/plugins/jl-content-tools/
-   - Theme: /wp-content/themes/jl-dark-lab/
+   - Plugin: /wp-content/plugins/jl-wp-plugins-pack/
 
 5. Activate:
    - Plugin: WordPress Admin -> Plugins -> JL Content Tools -> Activate
-   - Theme: WordPress Admin -> Appearance -> Themes -> JL Dark Lab -> Activate
 
 6. Future updates:
    - Edit files locally.
-   - Bump the Version header.
+   - Bump the plugin version constants/header.
    - Commit and push to GitHub.
    - Update from WordPress Admin using Git Updater.

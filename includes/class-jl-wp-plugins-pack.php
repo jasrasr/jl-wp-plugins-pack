@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class JL_Content_Tools {
+class JL_WP_Plugins_Pack {
     const NONCE_ACTION = 'jl_content_tools_excerpt_run';
     const NONCE_NAME   = 'jl_content_tools_excerpt_nonce';
 
@@ -34,14 +34,14 @@ class JL_Content_Tools {
             'JL Content Tools',
             'JL Content Tools',
             'manage_options',
-            'jl-content-tools',
+            'jl-wp-plugins-pack',
             [$this, 'render_page']
         );
     }
 
     public function render_page() {
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('You do not have permission to access this page.', 'jl-content-tools'));
+            wp_die(esc_html__('You do not have permission to access this page.', 'jl-wp-plugins-pack'));
         }
 
         $result = null;
@@ -51,7 +51,7 @@ class JL_Content_Tools {
             check_admin_referer(self::NONCE_ACTION, self::NONCE_NAME);
 
             if (!current_user_can('manage_options')) {
-                wp_die(esc_html__('You do not have permission to run this tool.', 'jl-content-tools'));
+                wp_die(esc_html__('You do not have permission to run this tool.', 'jl-wp-plugins-pack'));
             }
 
             $dry_run    = isset($_POST['dry_run']);
@@ -300,11 +300,11 @@ class JL_Content_Tools {
     }
 
     public function enqueue_hashtag_styles() {
-        wp_register_style('jl-content-tools-hashtags', false, [], JL_CONTENT_TOOLS_VERSION);
-        wp_enqueue_style('jl-content-tools-hashtags');
+        wp_register_style('jl-wp-plugins-pack-hashtags', false, [], JL_WP_PLUGINS_PACK_VERSION);
+        wp_enqueue_style('jl-wp-plugins-pack-hashtags');
 
         wp_add_inline_style(
-            'jl-content-tools-hashtags',
+            'jl-wp-plugins-pack-hashtags',
             '.jl-hashtag-link{display:inline-block;text-decoration:none;font-weight:700;border-bottom:1px dotted currentColor}.jl-hashtag-link:hover{text-decoration:underline}'
         );
     }
