@@ -1,0 +1,33 @@
+# OS/editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Logs/temp
+*.log
+*.tmp
+*.bak
+*.swp
+.cache/
+tmp/
+temp/
+
+# Dependencies/build output
+node_modules/
+vendor/
+dist/
+build/
+
+# Local environment/secrets
+.env
+.env.*
+*.local
+auth.json
+secrets.*
+*-local.php
+local-config.php
+
+# WordPress runtime uploads should never live in this code repo
+uploads/
