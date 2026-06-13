@@ -2,6 +2,10 @@
 
 All notable changes to this project should be documented in this file.
 
+## 2026-06-13 - 1.1.2
+
+- Bumped the plugin version to `1.1.2` so Git Updater can detect a newer release than the installed `1.1.1` build.
+
 ## 2026-06-13
 
 - Renamed the plugin slug from `jl-content-tools` to `jl-wp-plugins-pack`.
