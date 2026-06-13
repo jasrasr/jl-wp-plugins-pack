@@ -2,11 +2,11 @@
 /**
  * Plugin Name: JL Content Tools
  * Description: Content utilities for WordPress, including bulk excerpt generation, automatic excerpts, and hashtag linking.
-Version: 1.1.1
+ * Version: 1.1.1
  * Author: Jason Lamb
  * Primary Branch: main
- * GitHub Plugin URI: https://github.com/jasrasr/jl-content-tools
- * Update URI: https://github.com/jasrasr/jl-content-tools
+ * GitHub Plugin URI: https://github.com/jasrasr/jl-wp-plugins-pack
+ * Update URI: https://github.com/jasrasr/jl-wp-plugins-pack
  * Plugin URI: https://jasonlamb.me
  * License: GPL-2.0-or-later
  * Text Domain: jl-content-tools

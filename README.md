@@ -3,7 +3,7 @@
 Custom WordPress content utilities for Jason Lamb sites.
 
 - Website: https://jasonlamb.me
-- GitHub repository for this plugin: https://github.com/jasrasr/jl-content-tools
+- GitHub repository for this plugin: https://github.com/jasrasr/jl-wp-plugins-pack
 - Git Updater project: https://github.com/afragen/git-updater
 - Git Updater website: https://git-updater.com/
 
@@ -33,7 +33,7 @@ JL Content Tools currently provides:
 ## Repository layout
 
 ```text
-jl-content-tools/
+jl-wp-plugins-pack/
 ├── jl-content-tools.php
 ├── README.md
 └── includes/
@@ -45,7 +45,7 @@ jl-content-tools/
 The main plugin file includes this header so Git Updater can identify the GitHub repository:
 
 ```php
-GitHub Plugin URI: https://github.com/jasrasr/jl-content-tools
+GitHub Plugin URI: https://github.com/jasrasr/jl-wp-plugins-pack
 Primary Branch: main
 ```
 
@@ -79,7 +79,7 @@ Use this if the host gives you SSH access.
 
 ```bash
 cd public_html/wp-content/plugins
-git clone https://github.com/jasrasr/jl-content-tools.git jl-content-tools
+git clone https://github.com/jasrasr/jl-wp-plugins-pack.git jl-content-tools
 ```
 
 Then activate the plugin from WordPress admin.
@@ -103,7 +103,7 @@ https://github.com/afragen/git-updater
 3. In WordPress admin, use Git Updater's install screen to install this plugin from:
 
 ```text
-https://github.com/jasrasr/jl-content-tools
+https://github.com/jasrasr/jl-wp-plugins-pack
 ```
 
 4. Confirm the installed folder is:
@@ -161,13 +161,13 @@ Do not ignore `.agents/` if you use it for shared Codex/agent project instructio
 ## Jason Lamb Links
 
 - Website: https://jasonlamb.me
-- GitHub Repository: https://github.com/jasrasr/jl-content-tools
+- GitHub Repository: https://github.com/jasrasr/jl-wp-plugins-pack
 - Git Updater: https://github.com/afragen/git-updater
 
 ## New WordPress Site Implementation
 
 1. Create or confirm the GitHub repository:
-   - https://github.com/jasrasr/jl-content-tools
+   - https://github.com/jasrasr/jl-wp-plugins-pack
 
 2. Install Git Updater on WordPress:
    - Project: https://github.com/afragen/git-updater
@@ -190,21 +190,3 @@ Do not ignore `.agents/` if you use it for shared Codex/agent project instructio
    - Bump the Version header.
    - Commit and push to GitHub.
    - Update from WordPress Admin using Git Updater.
-
-## Git Updater Notes
-
-Git Updater expects the plugin or theme header to point to the repository.
-
-Plugin header example:
-
-``php
-GitHub Plugin URI: https://github.com/jasrasr/jl-content-tools
-Primary Branch: main
-``
-
-Theme header example:
-
-``css
-GitHub Theme URI: https://github.com/jasrasr/jl-dark-lab
-Primary Branch: main
-``
