@@ -1,9 +1,9 @@
 <?php
 /**
- * JL Content Tools
+ * JL WP Plugins Pack
  *
  * Features:
- * - Manual batch generation of missing excerpts from Tools -> JL Content Tools
+ * - Manual batch generation of missing excerpts from Tools -> JL WP Plugins Pack
  * - Automatic excerpt generation when saving posts
  * - Hashtag linking and hashtag-to-tag syncing
  */
@@ -31,8 +31,8 @@ class JL_WP_Plugins_Pack {
 
     public function add_tools_page() {
         add_management_page(
-            'JL Content Tools',
-            'JL Content Tools',
+            'JL WP Plugins Pack',
+            'JL WP Plugins Pack',
             'manage_options',
             'jl-wp-plugins-pack',
             [$this, 'render_page']
@@ -73,7 +73,7 @@ class JL_WP_Plugins_Pack {
 
         ?>
         <div class="wrap">
-            <h1>JL Content Tools</h1>
+            <h1>JL WP Plugins Pack</h1>
 
             <h2>Bulk Missing Excerpts</h2>
             <p>This tool generates missing excerpts from existing published post or page content.</p>

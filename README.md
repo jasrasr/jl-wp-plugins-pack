@@ -1,4 +1,4 @@
-# JL Content Tools
+# JL WP Plugins Pack
 
 Custom WordPress content utilities for Jason Lamb sites.
 
@@ -9,10 +9,10 @@ Custom WordPress content utilities for Jason Lamb sites.
 
 ## What this plugin does
 
-JL Content Tools currently provides:
+JL WP Plugins Pack currently provides:
 
 1. **Bulk missing excerpt generation**
-   - Adds `Tools -> JL Content Tools` in WordPress admin.
+   - Adds `Tools -> JL WP Plugins Pack` in WordPress admin.
    - Finds published posts/pages with empty manual excerpts.
    - Generates excerpts from existing content.
    - Includes dry-run mode and batch size controls.
@@ -63,11 +63,11 @@ Plugins -> Add New -> Upload Plugin
 ```
 
 3. Upload `jl-wp-plugins-pack.zip`.
-4. Activate **JL Content Tools**.
+4. Activate **JL WP Plugins Pack**.
 5. Go to:
 
 ```text
-Tools -> JL Content Tools
+Tools -> JL WP Plugins Pack
 ```
 
 6. Run the excerpt tool in **Dry Run** mode first.
@@ -112,7 +112,7 @@ https://github.com/jasrasr/jl-wp-plugins-pack
 wp-content/plugins/jl-wp-plugins-pack
 ```
 
-5. Activate **JL Content Tools**.
+5. Activate **JL WP Plugins Pack**.
 6. Future plugin updates should appear in the normal WordPress updates flow after you bump the plugin version and push changes to GitHub.
 
 ## Recommended GitHub workflow
@@ -126,15 +126,15 @@ wp-content/plugins/jl-wp-plugins-pack
 
 ```bash
 git add .
-git commit -m "Update JL Content Tools"
+git commit -m "Update JL WP Plugins Pack"
 git push
 ```
 
 7. Optionally tag the release:
 
 ```bash
-git tag v1.1.1
-git push origin v1.1.1
+git tag v1.1.4
+git push origin v1.1.4
 ```
 
 ## Safety notes
@@ -182,7 +182,7 @@ Do not ignore `.agents/` if you use it for shared Codex/agent project instructio
    - Plugin: /wp-content/plugins/jl-wp-plugins-pack/
 
 5. Activate:
-   - Plugin: WordPress Admin -> Plugins -> JL Content Tools -> Activate
+   - Plugin: WordPress Admin -> Plugins -> JL WP Plugins Pack -> Activate
 
 6. Future updates:
    - Edit files locally.

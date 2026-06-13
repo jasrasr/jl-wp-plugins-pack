@@ -2,6 +2,12 @@
 
 All notable changes to this project should be documented in this file.
 
+## 2026-06-13 - 1.1.4
+
+- Renamed the user-facing plugin name from `JL Content Tools` to `JL WP Plugins Pack`.
+- Updated the WordPress admin page label and README examples to use `JL WP Plugins Pack`.
+- Bumped the plugin version to `1.1.4` so Git Updater can detect the renamed display-name update.
+
 ## 2026-06-13 - 1.1.3
 
 - Bumped the plugin version to `1.1.3` after manually syncing the renamed plugin files to the live Hostinger install.

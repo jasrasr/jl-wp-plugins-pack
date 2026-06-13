@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: JL Content Tools
+ * Plugin Name: JL WP Plugins Pack
  * Description: Content utilities for WordPress, including bulk excerpt generation, automatic excerpts, and hashtag linking.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Jason Lamb
  * Primary Branch: main
  * GitHub Plugin URI: https://github.com/jasrasr/jl-wp-plugins-pack
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('JL_WP_PLUGINS_PACK_VERSION', '1.1.3');
+define('JL_WP_PLUGINS_PACK_VERSION', '1.1.4');
 define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', __FILE__);
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
