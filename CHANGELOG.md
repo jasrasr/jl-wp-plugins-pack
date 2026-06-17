@@ -2,6 +2,10 @@
 
 All notable changes to this project should be documented in this file.
 
+## 2026-06-17 - 1.1.5
+
+- Bumped the plugin version to `1.1.5` to verify the Git Updater update flow again after the `1.1.4` rename release.
+
 ## 2026-06-13 - 1.1.4
 
 - Renamed the user-facing plugin name from `JL Content Tools` to `JL WP Plugins Pack`.
