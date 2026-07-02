@@ -21,10 +21,12 @@ define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', __FILE__);
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack.php';
+require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack-ai-posts.php';
 
-register_activation_hook(__FILE__, ['JL_WP_Plugins_Pack', 'activate']);
-register_deactivation_hook(__FILE__, ['JL_WP_Plugins_Pack', 'deactivate']);
+register_activation_hook(__FILE__, ['JL_WP_Plugins_Pack_AI_Posts', 'activate']);
+register_deactivation_hook(__FILE__, ['JL_WP_Plugins_Pack_AI_Posts', 'deactivate']);
 
 add_action('plugins_loaded', static function () {
     new JL_WP_Plugins_Pack();
+    new JL_WP_Plugins_Pack_AI_Posts();
 });
