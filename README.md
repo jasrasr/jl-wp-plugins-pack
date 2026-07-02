@@ -30,6 +30,15 @@ JL WP Plugins Pack currently provides:
    - Preserves existing manual tags.
    - Avoids linking inside existing links, code blocks, preformatted blocks, scripts, styles, and HTML comments.
 
+4. **Scheduled AI-assisted blog posts**
+   - Adds a scheduled AI blog post generator under `Tools -> JL AI Posts`.
+   - Uses WP-Cron to generate one post per run.
+   - Supports hourly, twice-daily, daily, and weekly schedules.
+   - Lets you choose the WordPress author account used for generated posts.
+   - Saves posts as draft, pending review, or publish depending on the configured policy and the selected author's WordPress capabilities.
+   - Stores the last run status and a link to the most recent generated post.
+   - Supports a disclosure footer for AI-assisted content.
+
 ## Repository layout
 
 ```text
@@ -37,7 +46,8 @@ jl-wp-plugins-pack/
 ├── jl-wp-plugins-pack.php
 ├── README.md
 └── includes/
-    └── class-jl-wp-plugins-pack.php
+    ├── class-jl-wp-plugins-pack.php
+    └── class-jl-wp-plugins-pack-ai-posts.php
 ```
 
 ## Required WordPress/Git Updater header
@@ -50,6 +60,66 @@ Primary Branch: main
 ```
 
 Git Updater expects a `GitHub Plugin URI` or `GitHub Theme URI` style header that points to the owner/repository URL.
+
+## Scheduled AI posts setup
+
+Use this if you want the plugin to draft or publish posts automatically.
+
+1. Create a separate WordPress user for the AI workflow.
+
+   Recommended first setup:
+
+   ```text
+   Username: ai-author
+   Role: Contributor
+   ```
+
+   A Contributor-style user can submit pending posts but cannot publish. That is the safest first version.
+
+2. Add your OpenAI API key.
+
+   Preferred method: add this to `wp-config.php` outside the plugin repo:
+
+   ```php
+   define('JL_WP_PLUGINS_PACK_OPENAI_API_KEY', 'replace-with-your-api-key');
+   ```
+
+   The constant overrides the key stored in WordPress options. That avoids keeping secrets in the plugin source. Do not commit API keys. The robot does not need your wallet in Git history.
+
+   Alternative: paste the API key into the plugin settings page. The key is stored in the WordPress database and masked on the settings screen.
+
+3. Open:
+
+   ```text
+   WordPress Admin -> Tools -> JL AI Posts
+   ```
+
+4. Configure **Scheduled AI Blog Posts**:
+   - Enable schedule.
+   - Choose Weekly unless you have a good reason to post more often.
+   - Select the AI author.
+   - Choose the status policy.
+   - Add topic instructions.
+   - Save settings.
+
+5. Use **Generate One AI Post Now** for the first test.
+
+6. Review the generated post before enabling auto-publishing.
+
+### Status policy behavior
+
+| Policy | Result |
+|---|---|
+| Always save as Draft | Creates a draft regardless of author role. |
+| Always save as Pending Review | Creates a pending review post. |
+| Role-based | Publishes only if the selected author has `publish_posts`; otherwise saves pending review. |
+| Publish if allowed | Publishes only if the selected author has `publish_posts`; otherwise saves pending review. |
+
+For an AI user with the Contributor role, use **Pending Review** or **Role-based**. For an Author role, **Role-based** can publish automatically.
+
+### WP-Cron note
+
+The schedule uses WP-Cron. WP-Cron runs when the site receives visits and the scheduled time has passed. If you need reliable exact timing on Hostinger, configure a host cron job to call `wp-cron.php`.
 
 ## New website install - manual upload
 
@@ -133,14 +203,17 @@ git push
 7. Optionally tag the release:
 
 ```bash
-git tag v1.1.4
-git push origin v1.1.4
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 ## Safety notes
 
 - Keep this plugin in a public repo only if you are comfortable with the source being public.
 - Do not commit API keys, passwords, tokens, or local config files.
+- Prefer the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant in `wp-config.php` over storing the API key in the database.
+- Use a separate WordPress user for AI-generated posts.
+- Start with drafts or pending review before auto-publishing.
 - Test on a staging or low-risk site before production.
 - Back up the database before running bulk excerpt updates.
 
