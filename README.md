@@ -76,23 +76,25 @@ Use this if you want the plugin to draft or publish posts automatically.
 
    A Contributor-style user can submit pending posts but cannot publish. That is the safest first version.
 
-2. Add your OpenAI API key.
+2. Open:
 
-   Preferred method: add this to `wp-config.php` outside the plugin repo:
+   ```text
+   WordPress Admin -> Tools -> JL AI Posts
+   ```
+
+3. Add your OpenAI API key in the plugin settings page.
+
+   This is the normal setup for most WordPress users. The key is stored in the WordPress database as part of the plugin option, not inside the plugin files. A Git Updater plugin update replaces plugin files but does not overwrite this saved WordPress option.
+
+   Leave the API key field blank on future saves to keep the existing stored key.
+
+   Advanced optional method: a site administrator can define the key in `wp-config.php` outside the plugin repo:
 
    ```php
    define('JL_WP_PLUGINS_PACK_OPENAI_API_KEY', 'replace-with-your-api-key');
    ```
 
-   The constant overrides the key stored in WordPress options. That avoids keeping secrets in the plugin source. Do not commit API keys. The robot does not need your wallet in Git history.
-
-   Alternative: paste the API key into the plugin settings page. The key is stored in the WordPress database and masked on the settings screen.
-
-3. Open:
-
-   ```text
-   WordPress Admin -> Tools -> JL AI Posts
-   ```
+   If that constant is defined, it overrides the key stored in plugin settings. This is useful for managed or locked-down sites, but it should not be required for normal users.
 
 4. Configure **Scheduled AI Blog Posts**:
    - Enable schedule.
@@ -211,7 +213,8 @@ git push origin v1.2.0
 
 - Keep this plugin in a public repo only if you are comfortable with the source being public.
 - Do not commit API keys, passwords, tokens, or local config files.
-- Prefer the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant in `wp-config.php` over storing the API key in the database.
+- Normal users can store the API key in the plugin settings page; future plugin updates should not overwrite that saved option.
+- Site administrators can optionally use the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant in `wp-config.php` for managed environments.
 - Use a separate WordPress user for AI-generated posts.
 - Start with drafts or pending review before auto-publishing.
 - Test on a staging or low-risk site before production.
