@@ -10,9 +10,6 @@ All notable changes to this project should be documented in this file.
 - Added OpenAI API key support through either the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant or a stored WordPress option.
 - Added manual "Generate One AI Post Now" testing and last-run status logging.
 - Added README setup and safety notes for AI-generated posts.
-
-## 2026-06-17 - 1.2.0
-
 - Added GitHub PowerShell script monitoring under `Tools -> JL GitHub Drafts`.
 - Added weekly scans with an optional daily schedule.
 - Added manual GitHub checks.
