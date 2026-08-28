@@ -2,6 +2,15 @@
 
 All notable changes to this project should be documented in this file.
 
+## 2026-07-02 - 1.2.0
+
+- Added scheduled AI-assisted blog post generation under `Tools -> JL AI Posts`.
+- Added WP-Cron scheduling controls for hourly, twice-daily, daily, and weekly generation.
+- Added AI author selection and status policy handling for draft, pending review, role-based publishing, and publish-if-allowed workflows.
+- Added OpenAI API key support through either the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant or a stored WordPress option.
+- Added manual "Generate One AI Post Now" testing and last-run status logging.
+- Added README setup and safety notes for AI-generated posts.
+
 ## 2026-06-17 - 1.2.0
 
 - Added GitHub PowerShell script monitoring under `Tools -> JL GitHub Drafts`.
