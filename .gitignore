@@ -31,3 +31,8 @@ local-config.php
 
 # WordPress runtime uploads should never live in this code repo
 uploads/
+
+# Local AI assistant memory and instructions (kept out of this public repo)
+/.ai/
+/CLAUDE.md
+/AGENTS.md
