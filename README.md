@@ -101,8 +101,9 @@ Each scan performs:
    - Indexes published posts and pages as coherent passages. Each JSONL line includes the passage text, embedding, title, URL, date, and post ID.
    - Uses OpenAI `text-embedding-3-small` for semantic retrieval and the selected chat model for answers grounded in retrieved source passages.
    - Reuses the API key from `Tools -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
-   - Stores generated files under `public_html/ask/data/`, outside this plugin repository. The plugin writes `.htaccess` access rules and an `index.php` guard in that directory.
+   - Stores generated files under `public_html/ask-data/`, outside this plugin repository. This avoids a physical `/ask/` directory conflicting with WordPress routing. The plugin writes `.htaccess` access rules and an `index.php` guard in the data directory.
    - Limits public searches to eight requests per minute per IP address. Signed-in administrators bypass this limit.
+   - Excludes password-protected posts, rechecks that indexed sources are still public before returning them, and serializes concurrent index builds and per-IP rate-limit updates.
 
 To initialize it, configure the OpenAI API key if it is not already set, open `Tools -> Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
 

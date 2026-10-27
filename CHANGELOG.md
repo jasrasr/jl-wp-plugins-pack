@@ -6,10 +6,13 @@ All notable changes to this project should be documented in this file.
 
 - Added an Ask My Writing page at `/ask/` with a conversational question form and links to source posts/pages.
 - Added `Tools -> Ask My Writing` for index status, answer model settings, and resumable manual index builds.
-- Added passage extraction and JSONL storage under `public_html/ask/data/`, including direct-access denial files.
+- Added passage extraction and JSONL storage under `public_html/ask-data/`, including direct-access denial files.
 - Added semantic search with OpenAI `text-embedding-3-small` and grounded answers using the existing JL AI Posts API key.
 - Added public search request limits; administrators can bypass the limit while signed in.
 - Kept generated search data outside the plugin repository so plugin updates do not replace it.
+- Excluded password-protected posts and rechecked source visibility before answering.
+- Serialized concurrent index builds and per-IP request-limit updates.
+- Used a data directory name that does not shadow the `/ask/` WordPress page route.
 
 ## 2026-07-02 - 1.2.0
 

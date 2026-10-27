@@ -18,6 +18,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     const OPTION_NAME = 'jl_wp_plugins_pack_ask_writing_settings';
     const STATE_OPTION = 'jl_wp_plugins_pack_ask_writing_sync_state';
     const LOG_OPTION = 'jl_wp_plugins_pack_ask_writing_sync_log';
+    const SYNC_LOCK_OPTION = 'jl_wp_plugins_pack_ask_writing_sync_lock';
     const INDEX_FILE = 'index.jsonl';
     const BUILD_FILE = '.index-building.jsonl';
     const EMBEDDING_MODEL = 'text-embedding-3-small';
@@ -115,7 +116,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
                 </table>
                 <p><button type="submit" name="jl_save_ask_writing_settings" class="button">Save Settings</button></p>
             </form>
-            <p>Data files are stored under <code>public_html/ask/data/</code>, with direct downloads denied. The folder is outside this plugin repository, so GitHub plugin updates do not replace it.</p>
+            <p>Data files are stored under <code>public_html/ask-data/</code>, with direct downloads denied. This avoids creating a physical <code>/ask/</code> folder that could interfere with WordPress page routing. The data folder is outside this plugin repository, so plugin updates do not replace it.</p>
         </div>
         <script>
         (() => {
@@ -154,10 +155,18 @@ class JL_WP_Plugins_Pack_Ask_Writing {
             wp_send_json_error(['message' => 'Configure an OpenAI API key first.'], 400);
         }
 
+        $lock_token = time() . '|' . wp_generate_uuid4();
+        if (!$this->acquire_lock(self::SYNC_LOCK_OPTION, $lock_token, 300)) {
+            wp_send_json_error(['message' => 'Another index build is already running. Try again shortly.'], 409);
+        }
+        register_shutdown_function(function () use ($lock_token) {
+            $this->release_lock(self::SYNC_LOCK_OPTION, $lock_token);
+        });
+
         $state = get_option(self::STATE_OPTION, []);
         if (empty($state['active'])) {
             if (!$this->ensure_data_directory()) {
-                wp_send_json_error(['message' => 'Could not create a writable public_html/ask/data directory.'], 500);
+                wp_send_json_error(['message' => 'Could not create a writable public_html/ask-data directory.'], 500);
             }
             $post_types = $this->public_content_types();
             $total = (int) wp_count_posts('post')->publish;
@@ -187,6 +196,9 @@ class JL_WP_Plugins_Pack_Ask_Writing {
         foreach ($query->posts as $post_id) {
             $post = get_post($post_id);
             if (!$post) {
+                continue;
+            }
+            if (!empty($post->post_password)) {
                 continue;
             }
             $plain = $this->clean_content($post->post_content);
@@ -454,6 +466,10 @@ class JL_WP_Plugins_Pack_Ask_Writing {
         while (($line = fgets($handle)) !== false) {
             $record = json_decode($line, true);
             if (!is_array($record) || empty($record['embedding']) || empty($record['text'])) { continue; }
+            $post = !empty($record['post_id']) ? get_post(absint($record['post_id'])) : null;
+            if (!$post || $post->post_status !== 'publish' || !empty($post->post_password) || !is_post_type_viewable($post->post_type)) { continue; }
+            $record['title'] = get_the_title($post);
+            $record['url'] = get_permalink($post);
             $score = $this->cosine_similarity($query_vector, $record['embedding']);
             if ($score === null) { continue; }
             $record['_score'] = $score;
@@ -506,10 +522,37 @@ class JL_WP_Plugins_Pack_Ask_Writing {
         if (current_user_can('manage_options')) { return true; }
         $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
         $key = 'jl_ask_rate_' . md5($ip);
+        $lock_name = $key . '_lock';
+        $lock_token = time() . '|' . wp_generate_uuid4();
+        if (!$this->acquire_lock($lock_name, $lock_token, 10)) { return false; }
         $count = (int) get_transient($key);
-        if ($count >= 8) { return false; }
+        if ($count >= 8) {
+            $this->release_lock($lock_name, $lock_token);
+            return false;
+        }
         set_transient($key, $count + 1, MINUTE_IN_SECONDS);
+        $this->release_lock($lock_name, $lock_token);
         return true;
+    }
+
+    private function acquire_lock($name, $token, $stale_after) {
+        if (add_option($name, $token, '', false)) { return true; }
+        $current = (string) get_option($name, '');
+        $parts = explode('|', $current, 2);
+        $created = isset($parts[0]) ? absint($parts[0]) : 0;
+        if ($created && (time() - $created) > $stale_after) {
+            global $wpdb;
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $name, $current));
+            wp_cache_delete($name, 'options');
+            return add_option($name, $token, '', false);
+        }
+        return false;
+    }
+
+    private function release_lock($name, $token) {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $name, $token));
+        wp_cache_delete($name, 'options');
     }
 
     private function ensure_data_directory() {
@@ -522,7 +565,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     }
 
     private function data_directory() {
-        return trailingslashit(ABSPATH . 'ask/data');
+        return trailingslashit(ABSPATH . 'ask-data');
     }
 
     private function string_length($value) {
