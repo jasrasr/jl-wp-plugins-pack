@@ -116,7 +116,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
                 </table>
                 <p><button type="submit" name="jl_save_ask_writing_settings" class="button">Save Settings</button></p>
             </form>
-            <p>Data files are stored under <code>public_html/ask-data/</code>, with direct downloads denied. This avoids creating a physical <code>/ask/</code> folder that could interfere with WordPress page routing. The data folder is outside this plugin repository, so plugin updates do not replace it.</p>
+            <p>Data files are stored under <code>public_html/ask-data/</code>, with a separate <code>site-{blog-id}/</code> subdirectory for each multisite site and direct downloads denied. This avoids creating a physical <code>/ask/</code> folder that could interfere with WordPress page routing. The data folder is outside this plugin repository, so plugin updates do not replace it.</p>
         </div>
         <script>
         (() => {
@@ -460,28 +460,38 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     private function search_index($path, $query_vector) {
         $handle = fopen($path, 'rb');
         if (!$handle) { return new WP_Error('jl_ask_index_read', 'Could not read the writing index.', ['status' => 500]); }
-        $best = [];
+        $ranked = [];
         $settings = $this->settings();
         $limit = (int) $settings['passage_limit'];
         while (($line = fgets($handle)) !== false) {
             $record = json_decode($line, true);
             if (!is_array($record) || empty($record['embedding']) || empty($record['text'])) { continue; }
-            $post = !empty($record['post_id']) ? get_post(absint($record['post_id'])) : null;
-            if (!$post || $post->post_status !== 'publish' || !empty($post->post_password) || !is_post_type_viewable($post->post_type)) { continue; }
-            $record['title'] = get_the_title($post);
-            $record['url'] = get_permalink($post);
+            $post_id = !empty($record['post_id']) ? absint($record['post_id']) : 0;
+            if (!$post_id) { continue; }
             $score = $this->cosine_similarity($query_vector, $record['embedding']);
             if ($score === null) { continue; }
-            $record['_score'] = $score;
-            $best[] = $record;
-            if (count($best) > $limit * 3) {
-                usort($best, static function ($a, $b) { return $b['_score'] <=> $a['_score']; });
-                $best = array_slice($best, 0, $limit);
-            }
+            $ranked[] = ['post_id' => $post_id, 'text' => $record['text'], '_score' => $score];
         }
         fclose($handle);
-        usort($best, static function ($a, $b) { return $b['_score'] <=> $a['_score']; });
-        return array_slice($best, 0, $limit);
+        usort($ranked, static function ($a, $b) { return $b['_score'] <=> $a['_score']; });
+
+        $best = [];
+        $post_details = [];
+        foreach ($ranked as $record) {
+            $post_id = $record['post_id'];
+            if (!array_key_exists($post_id, $post_details)) {
+                $post = get_post($post_id);
+                $post_details[$post_id] = $post && $post->post_status === 'publish' && empty($post->post_password) && is_post_type_viewable($post->post_type)
+                    ? ['title' => get_the_title($post), 'url' => get_permalink($post)]
+                    : false;
+            }
+            if (!$post_details[$post_id]) { continue; }
+            $record['title'] = $post_details[$post_id]['title'];
+            $record['url'] = $post_details[$post_id]['url'];
+            $best[] = $record;
+            if (count($best) >= $limit) { break; }
+        }
+        return $best;
     }
 
     private function cosine_similarity($left, $right) {
@@ -565,7 +575,11 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     }
 
     private function data_directory() {
-        return trailingslashit(ABSPATH . 'ask-data');
+        $directory = trailingslashit(ABSPATH . 'ask-data');
+        if (is_multisite()) {
+            $directory .= 'site-' . absint(get_current_blog_id()) . '/';
+        }
+        return $directory;
     }
 
     private function string_length($value) {

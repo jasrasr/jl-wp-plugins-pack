@@ -101,7 +101,7 @@ Each scan performs:
    - Indexes published posts and pages as coherent passages. Each JSONL line includes the passage text, embedding, title, URL, date, and post ID.
    - Uses OpenAI `text-embedding-3-small` for semantic retrieval and the selected chat model for answers grounded in retrieved source passages.
    - Reuses the API key from `Tools -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
-   - Stores generated files under `public_html/ask-data/`, outside this plugin repository. This avoids a physical `/ask/` directory conflicting with WordPress routing. The plugin writes `.htaccess` access rules and an `index.php` guard in the data directory.
+   - Stores generated files under `public_html/ask-data/`, outside this plugin repository. On multisite, each site uses its own `site-{blog-id}/` subdirectory. This avoids a physical `/ask/` directory conflicting with WordPress routing. The plugin writes `.htaccess` access rules and an `index.php` guard in the data directory.
    - Limits public searches to eight requests per minute per IP address. Signed-in administrators bypass this limit.
    - Excludes password-protected posts, rechecks that indexed sources are still public before returning them, and serializes concurrent index builds and per-IP rate-limit updates.
 
