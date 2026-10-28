@@ -95,6 +95,20 @@ Each scan performs:
    - Stores the last run status and a link to the most recent generated post.
    - Supports a disclosure footer for AI-assisted content.
 
+5. **Ask My Writing**
+   - Creates an `Ask My Writing` page at `/ask/` the first time a site administrator opens WordPress after installing this version. If a page with that slug already exists, the plugin leaves its content unchanged.
+   - Adds `Tools -> Ask My Writing` for index status, answer model settings, and a resumable manual index build.
+   - Indexes published posts and pages as coherent passages. Each JSONL line includes the passage text, embedding, title, URL, date, and post ID.
+   - Uses OpenAI `text-embedding-3-small` for semantic retrieval and the selected chat model for answers grounded in retrieved source passages.
+   - Reuses the API key from `Tools -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
+   - Stores generated files under `public_html/ask-data/`, outside this plugin repository. On multisite, each site uses its own `site-{blog-id}/` subdirectory. This avoids a physical `/ask/` directory conflicting with WordPress routing. The plugin writes `.htaccess` access rules and an `index.php` guard in the data directory.
+   - Limits public searches to eight requests per minute per IP address. Signed-in administrators bypass this limit.
+   - Excludes password-protected posts, rechecks that indexed sources are still public before returning them, and serializes concurrent index builds and per-IP rate-limit updates.
+
+To initialize it, configure the OpenAI API key if it is not already set, open `Tools -> Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
+
+The `.htaccess` protection is used for the data directory. If the web server ignores `.htaccess`, configure the equivalent deny rule in the server configuration before making the feature public.
+
 ## Repository layout
 
 ```text
@@ -105,7 +119,8 @@ jl-wp-plugins-pack/
 └── includes/
     ├── class-jl-wp-plugins-pack.php
     ├── class-jl-github-powershell-drafts.php
-    └── class-jl-wp-plugins-pack-ai-posts.php
+    ├── class-jl-wp-plugins-pack-ai-posts.php
+    └── class-jl-wp-plugins-pack-ask-writing.php
 ```
 
 ## Install on a new WordPress site
