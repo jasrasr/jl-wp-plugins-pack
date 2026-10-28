@@ -164,6 +164,10 @@ class JL_WP_Plugins_Pack_Ask_Writing {
         });
 
         $state = get_option(self::STATE_OPTION, []);
+        // Older offset-based builds cannot be resumed safely after posts change.
+        if (!empty($state['active']) && (!isset($state['last_post_id']) || !isset($state['file_size']))) {
+            $state = [];
+        }
         if (empty($state['active'])) {
             if (!$this->ensure_data_directory()) {
                 wp_send_json_error(['message' => 'Could not create a writable public_html/ask-data directory.'], 500);
@@ -175,27 +179,38 @@ class JL_WP_Plugins_Pack_Ask_Writing {
                 $counts = wp_count_posts($type);
                 $total += isset($counts->publish) ? (int) $counts->publish : 0;
             }
-            $state = ['active' => true, 'offset' => 0, 'total' => $total, 'passages' => 0, 'post_types' => $post_types, 'started_at' => wp_date('Y-m-d H:i:s')];
-            file_put_contents($this->data_directory() . self::BUILD_FILE, '', LOCK_EX);
-            update_option(self::STATE_OPTION, $state, false);
+            $state = ['active' => true, 'offset' => 0, 'last_post_id' => 0, 'file_size' => 0, 'finalizing' => false, 'total' => $total, 'passages' => 0, 'post_types' => $post_types, 'started_at' => wp_date('Y-m-d H:i:s')];
+            if (file_put_contents($this->data_directory() . self::BUILD_FILE, '', LOCK_EX) === false || !update_option(self::STATE_OPTION, $state, false)) {
+                wp_send_json_error(['message' => 'Could not start the index build. Check storage permissions.'], 500);
+            }
         }
 
-        $query = new WP_Query([
-            'post_type' => $state['post_types'],
-            'post_status' => 'publish',
-            'posts_per_page' => 5,
-            'offset' => (int) $state['offset'],
-            'orderby' => 'ID',
-            'order' => 'ASC',
-            'fields' => 'ids',
-            'no_found_rows' => true,
-            'suppress_filters' => true,
-        ]);
+        if (!empty($state['finalizing'])) {
+            $this->finish_index_build($state);
+        }
+
+        $build = $this->data_directory() . self::BUILD_FILE;
+        if (!$this->restore_build_length($build, (int) $state['file_size'])) {
+            wp_send_json_error(['message' => 'Could not restore the index build file. Check storage permissions.'], 500);
+        }
+
+        $post_types = array_values(array_intersect($this->public_content_types(), (array) $state['post_types']));
+        if (!$post_types) {
+            wp_send_json_error(['message' => 'No public post types are available for indexing.'], 500);
+        }
+        global $wpdb;
+        $placeholders = implode(', ', array_fill(0, count($post_types), '%s'));
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE post_status = %s AND post_type IN ({$placeholders}) AND ID > %d ORDER BY ID ASC LIMIT 5";
+        $parameters = array_merge(['publish'], $post_types, [(int) $state['last_post_id']]);
+        $post_ids = $wpdb->get_col($wpdb->prepare($sql, $parameters));
+        if ($wpdb->last_error) {
+            wp_send_json_error(['message' => 'Could not read published posts for indexing.'], 500);
+        }
         $posts = [];
         $texts = [];
-        foreach ($query->posts as $post_id) {
+        foreach ($post_ids as $post_id) {
             $post = get_post($post_id);
-            if (!$post) {
+            if (!$post || $post->post_status !== 'publish' || !in_array($post->post_type, $post_types, true)) {
                 continue;
             }
             if (!empty($post->post_password)) {
@@ -225,28 +240,59 @@ class JL_WP_Plugins_Pack_Ask_Writing {
                 $record['embedding'] = $embeddings[$index];
                 $lines .= wp_json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
             }
-            $written = file_put_contents($this->data_directory() . self::BUILD_FILE, $lines, FILE_APPEND | LOCK_EX);
-            if ($written === false) {
+            $written = file_put_contents($build, $lines, FILE_APPEND | LOCK_EX);
+            if ($written === false || $written !== strlen($lines)) {
                 wp_send_json_error(['message' => 'Could not write the index file. Check directory permissions.'], 500);
             }
+            $state['file_size'] += $written;
             $state['passages'] += count($posts);
         }
 
-        $state['offset'] += count($query->posts);
-        if (count($query->posts) < 5 || $state['offset'] >= $state['total']) {
-            $build = $this->data_directory() . self::BUILD_FILE;
-            $final = $this->data_directory() . self::INDEX_FILE;
-            if (!@rename($build, $final)) {
+        $state['offset'] += count($post_ids);
+        if ($post_ids) {
+            $state['last_post_id'] = (int) end($post_ids);
+        }
+        $state['finalizing'] = count($post_ids) < 5;
+
+        if (!update_option(self::STATE_OPTION, $state, false)) {
+            wp_send_json_error(['message' => 'Could not save index progress. Retry to restore the last committed batch.'], 500);
+        }
+        if ($state['finalizing']) {
+            $this->finish_index_build($state);
+        }
+        wp_send_json_success(['done' => false, 'offset' => (int) $state['offset'], 'total' => (int) $state['total'], 'passages' => (int) $state['passages']]);
+    }
+
+    private function restore_build_length($path, $committed_size) {
+        $handle = @fopen($path, 'r+b');
+        if (!$handle) { return false; }
+        $locked = flock($handle, LOCK_EX);
+        $info = $locked ? fstat($handle) : false;
+        $valid = $info && $committed_size >= 0 && $info['size'] >= $committed_size;
+        if ($valid && $info['size'] > $committed_size) {
+            $valid = ftruncate($handle, $committed_size) && fflush($handle);
+        }
+        if ($locked) { flock($handle, LOCK_UN); }
+        fclose($handle);
+        return $valid;
+    }
+
+    private function finish_index_build($state) {
+        $build = $this->data_directory() . self::BUILD_FILE;
+        $final = $this->data_directory() . self::INDEX_FILE;
+        if (is_file($build)) {
+            if (!$this->restore_build_length($build, (int) $state['file_size']) || !@rename($build, $final)) {
                 wp_send_json_error(['message' => 'Could not finish replacing the index file. Check directory permissions.'], 500);
             }
-            $state['active'] = false;
-            update_option(self::LOG_OPTION, ['completed_at' => wp_date('Y-m-d H:i:s'), 'passages' => (int) $state['passages'], 'posts' => (int) $state['offset']], false);
-            delete_option(self::STATE_OPTION);
-            wp_send_json_success(['done' => true, 'offset' => (int) $state['offset'], 'total' => (int) $state['total'], 'passages' => (int) $state['passages']]);
+        } else {
+            clearstatcache(true, $final);
+            if (!is_file($final) || filesize($final) !== (int) $state['file_size']) {
+                wp_send_json_error(['message' => 'Could not confirm the completed index file.'], 500);
+            }
         }
-
-        update_option(self::STATE_OPTION, $state, false);
-        wp_send_json_success(['done' => false, 'offset' => (int) $state['offset'], 'total' => (int) $state['total'], 'passages' => (int) $state['passages']]);
+        update_option(self::LOG_OPTION, ['completed_at' => wp_date('Y-m-d H:i:s'), 'passages' => (int) $state['passages'], 'posts' => (int) $state['offset']], false);
+        delete_option(self::STATE_OPTION);
+        wp_send_json_success(['done' => true, 'offset' => (int) $state['offset'], 'total' => (int) $state['total'], 'passages' => (int) $state['passages']]);
     }
 
     public function register_rest_routes() {
@@ -397,6 +443,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
 
     private function clean_content($html) {
         $html = preg_replace('/<(script|style|noscript)\b[^>]*>.*?<\/\1>/is', ' ', (string) $html);
+        $html = preg_replace('/<br\b[^>]*>/i', "\n", (string) $html);
         $html = preg_replace('/<\/(p|div|li|h[1-6]|blockquote|pre|br|tr)>/i', "\n", (string) $html);
         $text = html_entity_decode(wp_strip_all_tags(strip_shortcodes($html)), ENT_QUOTES | ENT_HTML5, get_bloginfo('charset') ?: 'UTF-8');
         $text = preg_replace('/[\t\x{00a0} ]+/u', ' ', (string) $text);

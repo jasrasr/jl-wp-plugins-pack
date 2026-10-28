@@ -2,6 +2,12 @@
 
 All notable changes to this project should be documented in this file.
 
+## Unreleased
+
+- Resumed Ask My Writing index builds from the last processed post ID so edits to earlier posts cannot skip later posts.
+- Recovered uncommitted index bytes before retrying and checkpointed completed batches before publishing the index.
+- Preserved word boundaries when extracting text across HTML line breaks.
+
 ## 2026-10-27 - 1.3.0
 
 - Added an Ask My Writing page at `/ask/` with a conversational question form and links to source posts/pages.
