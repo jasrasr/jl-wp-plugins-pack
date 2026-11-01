@@ -4,8 +4,9 @@ All notable changes to this project should be documented in this file.
 
 ## 2026-11-01 - 1.4.0
 
-- Added a Boy or Girl baby guessing poll shortcode with aggregate results and cookie-based repeat-vote discouragement.
-- Added poll totals and reset controls under `Tools -> JL Baby Gender Poll`.
+- Added the customizable [jl_poll] shortcode with unique poll IDs, custom questions, and 2–8 choices.
+- Kept [jl_baby_gender_poll] as a Boy/Girl shortcut.
+- Added aggregate totals and reset controls under Tools -> JL Polls.
 - Documented the poll shortcode and its data handling.
 
 ## Unreleased
