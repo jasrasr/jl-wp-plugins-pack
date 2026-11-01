@@ -127,10 +127,10 @@ The `.htaccess` protection is used for the data directory. If the web server ign
 ```text
 jl-wp-plugins-pack/
 ├── jl-wp-plugins-pack.php
-├── includes/class-jl-wp-plugins-pack-baby-poll.php
 ├── README.md
 ├── CHANGELOG.md
 └── includes/
+    ├── class-jl-wp-plugins-pack-baby-poll.php
     ├── class-jl-wp-plugins-pack.php
     ├── class-jl-github-powershell-drafts.php
     ├── class-jl-wp-plugins-pack-ai-posts.php
