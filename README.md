@@ -28,6 +28,22 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Preserves manually assigned tags.
 - Avoids existing links, code blocks, preformatted blocks, scripts, styles, and comments.
 
+### Customizable polls
+
+- Adds the [jl_poll] shortcode for polls with a custom question and 2–8 choices.
+- Give each poll a unique ID to keep its results separate.
+- Shows vote totals and percentages after a visitor votes.
+- Adds Tools -> JL Polls for aggregate totals and an administrator-only reset.
+- Stores aggregate totals in WordPress options. A one-year first-party cookie per poll discourages repeat voting in the same browser; no voter names, email addresses, IP addresses, or user-agent strings are stored.
+- Keeps [jl_baby_gender_poll] as a Boy/Girl shortcut.
+
+Example:
+
+```text
+[jl_poll id="lunch" question="What should we eat?" options="Pizza|Tacos|Burgers"]
+[jl_baby_gender_poll question="Will Baby Lamb be a boy or a girl?"]
+```
+
 ### GitHub PowerShell drafts
 
 - Adds `Tools -> JL GitHub Drafts`.
@@ -117,6 +133,7 @@ jl-wp-plugins-pack/
 ├── README.md
 ├── CHANGELOG.md
 └── includes/
+    ├── class-jl-wp-plugins-pack-baby-poll.php
     ├── class-jl-wp-plugins-pack.php
     ├── class-jl-github-powershell-drafts.php
     ├── class-jl-wp-plugins-pack-ai-posts.php
