@@ -38,7 +38,14 @@ class JL_WP_Plugins_Pack_Baby_Poll {
         $cookie=self::COOKIE.substr(hash('sha256',$id),0,16);
         $voted=isset($_COOKIE[$cookie]);
         ob_start(); ?>
-        <section class="jl-poll"><h2><?php echo esc_html($question); ?></h2>
+        <section class="jl-poll"><style>
+.jl-poll form{display:flex;flex-wrap:wrap;gap:12px;margin:1rem 0}
+.jl-poll button[name="poll_choice"]{appearance:none;min-width:140px;min-height:54px;padding:14px 22px;border:2px solid #1769aa;border-radius:10px;background:#1769aa;color:#fff;font:inherit;font-size:1.1rem;font-weight:700;line-height:1.2;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.25);transition:transform .15s ease,background-color .15s ease,box-shadow .15s ease}
+.jl-poll button[name="poll_choice"]:hover{background:#0b4778;border-color:#0b4778;transform:translateY(-2px);box-shadow:0 5px 12px rgba(0,0,0,.32)}
+.jl-poll button[name="poll_choice"]:focus-visible{outline:3px solid #ffbf47;outline-offset:3px}
+.jl-poll button[name="poll_choice"]:active{transform:translateY(0)}
+@media(max-width:480px){.jl-poll form{flex-direction:column}.jl-poll button[name="poll_choice"]{width:100%}}
+</style><h2><?php echo esc_html($question); ?></h2>
         <?php if(!$voted): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
         <input type="hidden" name="action" value="jl_poll_vote"><input type="hidden" name="poll_id" value="<?php echo esc_attr($id); ?>">
         <input type="hidden" name="poll_options" value="<?php echo esc_attr(wp_json_encode($options)); ?>">
