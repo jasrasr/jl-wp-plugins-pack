@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-01 - 1.4.1
+
+- Bumped the plugin version so WordPress and Git Updater detect the merged poll button styling update.
+
 All notable changes to this project should be documented in this file.
 
 ## 2026-11-01 - 1.4.0
