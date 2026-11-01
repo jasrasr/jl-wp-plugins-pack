@@ -28,6 +28,19 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Preserves manually assigned tags.
 - Avoids existing links, code blocks, preformatted blocks, scripts, styles, and comments.
 
+### Baby gender guessing poll
+
+- Adds the `[jl_baby_gender_poll]` shortcode with Boy and Girl choices.
+- Shows aggregate counts and percentages after a visitor votes.
+- Adds `Tools -> JL Baby Gender Poll` for totals and an administrator-only reset.
+- Stores only aggregate vote totals; a one-year first-party cookie discourages repeat votes in the same browser. It does not store voter names, email addresses, IP addresses, or user-agent strings.
+
+Example with a custom question:
+
+```text
+[jl_baby_gender_poll question="Will Baby Lamb be a boy or a girl?"]
+```
+
 ### GitHub PowerShell drafts
 
 - Adds `Tools -> JL GitHub Drafts`.
@@ -114,6 +127,7 @@ The `.htaccess` protection is used for the data directory. If the web server ign
 ```text
 jl-wp-plugins-pack/
 ├── jl-wp-plugins-pack.php
+├── includes/class-jl-wp-plugins-pack-baby-poll.php
 ├── README.md
 ├── CHANGELOG.md
 └── includes/
