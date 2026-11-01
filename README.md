@@ -28,16 +28,19 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Preserves manually assigned tags.
 - Avoids existing links, code blocks, preformatted blocks, scripts, styles, and comments.
 
-### Baby gender guessing poll
+### Customizable polls
 
-- Adds the `[jl_baby_gender_poll]` shortcode with Boy and Girl choices.
-- Shows aggregate counts and percentages after a visitor votes.
-- Adds `Tools -> JL Baby Gender Poll` for totals and an administrator-only reset.
-- Stores only aggregate vote totals; a one-year first-party cookie discourages repeat votes in the same browser. It does not store voter names, email addresses, IP addresses, or user-agent strings.
+- Adds the [jl_poll] shortcode for polls with a custom question and 2–8 choices.
+- Give each poll a unique ID to keep its results separate.
+- Shows vote totals and percentages after a visitor votes.
+- Adds Tools -> JL Polls for aggregate totals and an administrator-only reset.
+- Stores aggregate totals in WordPress options. A one-year first-party cookie per poll discourages repeat voting in the same browser; no voter names, email addresses, IP addresses, or user-agent strings are stored.
+- Keeps [jl_baby_gender_poll] as a Boy/Girl shortcut.
 
-Example with a custom question:
+Example:
 
 ```text
+[jl_poll id="lunch" question="What should we eat?" options="Pizza|Tacos|Burgers"]
 [jl_baby_gender_poll question="Will Baby Lamb be a boy or a girl?"]
 ```
 
