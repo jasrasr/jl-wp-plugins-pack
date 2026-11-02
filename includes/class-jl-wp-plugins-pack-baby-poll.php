@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 class JL_WP_Plugins_Pack_Baby_Poll {
     const OPTION = 'jl_wp_plugins_pack_poll_votes';
+    const LABELS_OPTION = 'jl_wp_plugins_pack_poll_labels';
     const COOKIE = 'jl_poll_voted_';
     const NONCE = 'jl_wp_plugins_pack_poll_vote';
 
@@ -32,6 +33,12 @@ class JL_WP_Plugins_Pack_Baby_Poll {
 
     public function render($atts = []) {
         [$id,$question,$options]=$this->config($atts);
+        $labels = get_option(self::LABELS_OPTION, []);
+        if (!is_array($labels)) $labels = [];
+        if (($labels[$id] ?? null) !== $options) {
+            $labels[$id] = $options;
+            update_option(self::LABELS_OPTION, $labels, false);
+        }
         $all=get_option(self::OPTION, []);
         $votes=is_array($all[$id]??null)?$all[$id]:[];
         $total=array_sum(array_map('absint',$votes));
@@ -78,6 +85,8 @@ class JL_WP_Plugins_Pack_Baby_Poll {
     public function admin_page() {
         if (!current_user_can('manage_options')) return;
         $all = get_option(self::OPTION, []);
+        $labels = get_option(self::LABELS_OPTION, []);
+        if (!is_array($labels)) $labels = [];
         echo '<div class="wrap"><h1>JL Polls</h1><p>Use [jl_poll id="lunch" question="What should we eat?" options="Pizza|Tacos|Burgers"]. Each poll ID is managed separately.</p>';
         if (!is_array($all) || !$all) echo '<p>No votes have been recorded yet.</p>';
         foreach ((array) $all as $poll_id => $choices) {
@@ -85,9 +94,14 @@ class JL_WP_Plugins_Pack_Baby_Poll {
             echo '<h2>Poll: ' . esc_html($poll_id) . '</h2><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
             echo '<input type="hidden" name="action" value="jl_poll_manage"><input type="hidden" name="poll_id" value="' . esc_attr($poll_id) . '">';
             wp_nonce_field('jl_poll_manage_' . $poll_id, '_jl_poll_manage_nonce');
-            foreach ($choices as $index => $count) {
-                echo '<label style="margin-right:1rem">Choice ' . esc_html((string) ((int)$index + 1)) . ' votes <input type="number" min="0" name="counts[' . esc_attr((string)$index) . ']" value="' . esc_attr((string) absint($count)) . '"></label>';
+            $indices = array_unique(array_merge(array_keys($choices), array_keys((array) ($labels[$poll_id] ?? []))));
+            sort($indices, SORT_NUMERIC);
+            foreach ($indices as $index) {
+                $count = $choices[$index] ?? 0;
+                $label = isset($labels[$poll_id][$index]) ? $labels[$poll_id][$index] : 'Choice ' . ((int) $index + 1) . ' (label unavailable)';
+                echo '<label style="display:inline-block;margin:0 1rem 1rem 0">' . esc_html($label) . ' votes <input type="number" min="0" name="counts[' . esc_attr((string)$index) . ']" value="' . esc_attr((string) absint($count)) . '"></label>';
             }
+            if (empty($labels[$poll_id])) echo '<p class="description">Option names will appear after a page containing this poll shortcode is viewed. The numbered fields remain editable.</p>';
             submit_button('Save vote totals', 'primary', 'submit', false);
             echo '</form><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="jl_poll_manage"><input type="hidden" name="poll_id" value="' . esc_attr($poll_id) . '"><input type="hidden" name="reset_poll" value="1">';
             wp_nonce_field('jl_poll_manage_' . $poll_id, '_jl_poll_manage_nonce');

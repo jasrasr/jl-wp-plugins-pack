@@ -58,7 +58,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     }
 
     public function add_tools_page() {
-        add_management_page('Ask My Writing', 'Ask My Writing', 'manage_options', 'jl-ask-my-writing', [$this, 'render_admin_page']);
+        add_management_page('JL Ask My Writing', 'JL Ask My Writing', 'manage_options', 'jl-ask-my-writing', [$this, 'render_admin_page']);
     }
 
     public function render_admin_page() {

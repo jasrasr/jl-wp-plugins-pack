@@ -33,7 +33,7 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Adds the [jl_poll] shortcode for polls with a custom question and 2–8 choices.
 - Give each poll a unique ID to keep its results separate.
 - Shows vote totals and percentages after a visitor votes.
-- Adds Tools -> JL Polls to view and edit each choice total or reset one poll without affecting the others.
+- Adds Tools -> JL Polls to view and edit each named choice total, including zero-vote choices, or reset one poll without affecting the others. For older polls, visit a page containing the shortcode once after updating so its option names appear in the admin form.
 - Stores aggregate totals in WordPress options. A one-year first-party cookie per poll discourages repeat voting in the same browser; no voter names, email addresses, IP addresses, or user-agent strings are stored.
 - Keeps [jl_baby_gender_poll] as a Boy/Girl shortcut.
 
@@ -113,7 +113,7 @@ Each scan performs:
 
 5. **Ask My Writing**
    - Creates an `Ask My Writing` page at `/ask/` the first time a site administrator opens WordPress after installing this version. If a page with that slug already exists, the plugin leaves its content unchanged.
-   - Adds `Tools -> Ask My Writing` for index status, answer model settings, and a resumable manual index build.
+   - Adds `Tools -> JL Ask My Writing` for index status, answer model settings, and a resumable manual index build.
    - Indexes published posts and pages as coherent passages. Each JSONL line includes the passage text, embedding, title, URL, date, and post ID.
    - Uses OpenAI `text-embedding-3-small` for semantic retrieval and the selected chat model for answers grounded in retrieved source passages.
    - Reuses the API key from `Tools -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
@@ -121,7 +121,7 @@ Each scan performs:
    - Limits public searches to eight requests per minute per IP address. Signed-in administrators bypass this limit.
    - Excludes password-protected posts, rechecks that indexed sources are still public before returning them, and serializes concurrent index builds and per-IP rate-limit updates.
 
-To initialize it, configure the OpenAI API key if it is not already set, open `Tools -> Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
+To initialize it, configure the OpenAI API key if it is not already set, open `Tools -> JL Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
 
 The `.htaccess` protection is used for the data directory. If the web server ignores `.htaccess`, configure the equivalent deny rule in the server configuration before making the feature public.
 

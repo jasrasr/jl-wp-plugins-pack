@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-01 - 1.5.1
+
+- Show poll option names beside editable vote totals, including choices with zero votes, after the shortcode has rendered.
+- Rename the Tools menu item to JL Ask My Writing.
+- Bump the plugin version so Git Updater can detect these changes.
+
 ## 2026-11-01 - 1.5.0
 
 - Added administrator controls to edit individual poll choice totals or reset a single poll.
