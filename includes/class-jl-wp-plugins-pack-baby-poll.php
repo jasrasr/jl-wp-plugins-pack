@@ -12,7 +12,7 @@ class JL_WP_Plugins_Pack_Baby_Poll {
         add_action('admin_post_jl_poll_vote', [$this, 'vote']);
         add_action('admin_post_nopriv_jl_poll_vote', [$this, 'vote']);
         add_action('admin_menu', [$this, 'admin_menu']);
-        add_action('admin_post_jl_poll_reset', [$this, 'reset']);
+        add_action('admin_post_jl_poll_manage', [$this, 'reset']);
     }
 
     public function render_baby_alias($atts = []) {
@@ -75,6 +75,42 @@ class JL_WP_Plugins_Pack_Baby_Poll {
     }
 
     public function admin_menu(){ add_management_page('JL Polls','JL Polls','manage_options','jl-polls',[$this,'admin_page']); }
-    public function admin_page(){ if(!current_user_can('manage_options'))return; $all=get_option(self::OPTION,[]); echo '<div class="wrap"><h1>JL Polls</h1><p>Poll totals are stored in WordPress options. Use [jl_poll id="lunch" question="What should we eat?" options="Pizza|Tacos|Burgers"]. IDs keep poll results separate. [jl_baby_gender_poll] remains available.</p><pre>'.esc_html(print_r($all,true)).'</pre><form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="jl_poll_reset">'; wp_nonce_field('jl_poll_reset','_jl_poll_reset_nonce'); submit_button('Reset all poll totals','delete'); echo '</form></div>'; }
-    public function reset(){ if(!current_user_can('manage_options'))wp_die('Forbidden','',['response'=>403]); check_admin_referer('jl_poll_reset','_jl_poll_reset_nonce'); delete_option(self::OPTION); wp_safe_redirect(admin_url('tools.php?page=jl-polls')); exit; }
+    public function admin_page() {
+        if (!current_user_can('manage_options')) return;
+        $all = get_option(self::OPTION, []);
+        echo '<div class="wrap"><h1>JL Polls</h1><p>Use [jl_poll id="lunch" question="What should we eat?" options="Pizza|Tacos|Burgers"]. Each poll ID is managed separately.</p>';
+        if (!is_array($all) || !$all) echo '<p>No votes have been recorded yet.</p>';
+        foreach ((array) $all as $poll_id => $choices) {
+            if (!is_array($choices)) continue;
+            echo '<h2>Poll: ' . esc_html($poll_id) . '</h2><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+            echo '<input type="hidden" name="action" value="jl_poll_manage"><input type="hidden" name="poll_id" value="' . esc_attr($poll_id) . '">';
+            wp_nonce_field('jl_poll_manage_' . $poll_id, '_jl_poll_manage_nonce');
+            foreach ($choices as $index => $count) {
+                echo '<label style="margin-right:1rem">Choice ' . esc_html((string) ((int)$index + 1)) . ' votes <input type="number" min="0" name="counts[' . esc_attr((string)$index) . ']" value="' . esc_attr((string) absint($count)) . '"></label>';
+            }
+            submit_button('Save vote totals', 'primary', 'submit', false);
+            echo '</form><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="jl_poll_manage"><input type="hidden" name="poll_id" value="' . esc_attr($poll_id) . '"><input type="hidden" name="reset_poll" value="1">';
+            wp_nonce_field('jl_poll_manage_' . $poll_id, '_jl_poll_manage_nonce');
+            submit_button('Reset this poll', 'secondary', 'submit', false);
+            echo '</form>';
+        }
+        echo '</div>';
+    }
+
+    public function reset() {
+        if (!current_user_can('manage_options')) wp_die('Forbidden', '', ['response' => 403]);
+        $id = isset($_POST['poll_id']) ? sanitize_key(wp_unslash($_POST['poll_id'])) : '';
+        if (!$id) wp_die('Invalid poll.', '', ['response' => 400]);
+        check_admin_referer('jl_poll_manage_' . $id, '_jl_poll_manage_nonce');
+        $all = get_option(self::OPTION, []);
+        if (!is_array($all)) $all = [];
+        if (isset($_POST['reset_poll'])) unset($all[$id]);
+        else {
+            $counts = isset($_POST['counts']) && is_array($_POST['counts']) ? wp_unslash($_POST['counts']) : [];
+            foreach ($counts as $index => $count) $all[$id][absint($index)] = absint($count);
+        }
+        update_option(self::OPTION, $all, false);
+        wp_safe_redirect(admin_url('tools.php?page=jl-polls'));
+        exit;
+    }
 }
