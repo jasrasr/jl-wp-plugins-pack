@@ -33,7 +33,7 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Adds the [jl_poll] shortcode for polls with a custom question and 2–8 choices.
 - Give each poll a unique ID to keep its results separate.
 - Shows vote totals and percentages after a visitor votes.
-- Adds Tools -> JL Polls for aggregate totals and an administrator-only reset.
+- Adds Tools -> JL Polls to view and edit each choice total or reset one poll without affecting the others.
 - Stores aggregate totals in WordPress options. A one-year first-party cookie per poll discourages repeat voting in the same browser; no voter names, email addresses, IP addresses, or user-agent strings are stored.
 - Keeps [jl_baby_gender_poll] as a Boy/Girl shortcut.
 

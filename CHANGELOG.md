@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-01 - 1.5.0
+
+- Added administrator controls to edit individual poll choice totals or reset a single poll.
+- Preserved other poll totals when adjusting or clearing one poll.
+
 ## 2026-11-01 - 1.4.1
 
 - Bumped the plugin version so WordPress and Git Updater detect the merged poll button styling update.
