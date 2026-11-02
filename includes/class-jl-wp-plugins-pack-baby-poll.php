@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) { exit; }
 class JL_WP_Plugins_Pack_Baby_Poll {
     const OPTION = 'jl_wp_plugins_pack_poll_votes';
     const LABELS_OPTION = 'jl_wp_plugins_pack_poll_labels';
+    const LABEL_OVERRIDES_OPTION = 'jl_wp_plugins_pack_poll_label_overrides';
     const COOKIE = 'jl_poll_voted_';
     const NONCE = 'jl_wp_plugins_pack_poll_vote';
 
@@ -35,7 +36,9 @@ class JL_WP_Plugins_Pack_Baby_Poll {
         [$id,$question,$options]=$this->config($atts);
         $labels = get_option(self::LABELS_OPTION, []);
         if (!is_array($labels)) $labels = [];
-        if (($labels[$id] ?? null) !== $options) {
+        $overrides = get_option(self::LABEL_OVERRIDES_OPTION, []);
+        if (!is_array($overrides)) $overrides = [];
+        if (empty($overrides[$id]) && ($labels[$id] ?? null) !== $options) {
             $labels[$id] = $options;
             update_option(self::LABELS_OPTION, $labels, false);
         }
@@ -101,7 +104,8 @@ class JL_WP_Plugins_Pack_Baby_Poll {
                 $label = isset($labels[$poll_id][$index]) ? $labels[$poll_id][$index] : 'Choice ' . ((int) $index + 1) . ' (label unavailable)';
                 echo '<label style="display:inline-block;margin:0 1rem 1rem 0">' . esc_html($label) . ' votes <input type="number" min="0" name="counts[' . esc_attr((string)$index) . ']" value="' . esc_attr((string) absint($count)) . '"></label>';
             }
-            if (empty($labels[$poll_id])) echo '<p class="description">Option names will appear after a page containing this poll shortcode is viewed. The numbered fields remain editable.</p>';
+            echo '<p><label for="jl-poll-labels-' . esc_attr($poll_id) . '">Option names, in voting order</label><br><input class="regular-text" id="jl-poll-labels-' . esc_attr($poll_id) . '" name="poll_labels" value="' . esc_attr(implode('|', (array) ($labels[$poll_id] ?? []))) . '" placeholder="Boy|Girl"></p>';
+            echo '<p class="description">Separate names with | in the same order as the shortcode. These names identify admin totals; edit the shortcode to change public choices. Save to add fields for choices with zero votes.</p>';
             submit_button('Save vote totals', 'primary', 'submit', false);
             echo '</form><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="jl_poll_manage"><input type="hidden" name="poll_id" value="' . esc_attr($poll_id) . '"><input type="hidden" name="reset_poll" value="1">';
             wp_nonce_field('jl_poll_manage_' . $poll_id, '_jl_poll_manage_nonce');
@@ -120,6 +124,21 @@ class JL_WP_Plugins_Pack_Baby_Poll {
         if (!is_array($all)) $all = [];
         if (isset($_POST['reset_poll'])) unset($all[$id]);
         else {
+            $label_input = isset($_POST['poll_labels']) && is_string($_POST['poll_labels']) ? trim(sanitize_text_field(wp_unslash($_POST['poll_labels']))) : '';
+            if ($label_input !== '') {
+                $new_labels = array_map('trim', explode('|', $label_input));
+                if (count($new_labels) < 2 || count($new_labels) > 8 || in_array('', $new_labels, true) || count(array_unique($new_labels)) !== count($new_labels)) {
+                    wp_die('Enter 2 to 8 distinct option names separated by |.', '', ['response' => 400]);
+                }
+                $labels = get_option(self::LABELS_OPTION, []);
+                if (!is_array($labels)) $labels = [];
+                $labels[$id] = $new_labels;
+                update_option(self::LABELS_OPTION, $labels, false);
+                $overrides = get_option(self::LABEL_OVERRIDES_OPTION, []);
+                if (!is_array($overrides)) $overrides = [];
+                $overrides[$id] = true;
+                update_option(self::LABEL_OVERRIDES_OPTION, $overrides, false);
+            }
             $counts = isset($_POST['counts']) && is_array($_POST['counts']) ? wp_unslash($_POST['counts']) : [];
             foreach ($counts as $index => $count) $all[$id][absint($index)] = absint($count);
         }

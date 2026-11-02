@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-01 - 1.5.2
+
+- Let administrators enter option names in voting order for polls whose older vote totals have no saved labels.
+- Preserve manually entered names when the poll shortcode renders again.
+
 ## 2026-11-01 - 1.5.1
 
 - Show poll option names beside editable vote totals, including choices with zero votes, after the shortcode has rendered.
