@@ -25,6 +25,7 @@ require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-github-powershel
 require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack-ai-posts.php';
 require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack-ask-writing.php';
 require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack-baby-poll.php';
+require_once JL_WP_PLUGINS_PACK_PLUGIN_DIR . 'includes/class-jl-wp-plugins-pack-webstats.php';
 
 register_activation_hook(__FILE__, ['JL_GitHub_PowerShell_Drafts', 'activate']);
 register_deactivation_hook(__FILE__, ['JL_GitHub_PowerShell_Drafts', 'deactivate']);
@@ -37,4 +38,5 @@ add_action('plugins_loaded', static function () {
     new JL_WP_Plugins_Pack_AI_Posts();
     new JL_WP_Plugins_Pack_Ask_Writing();
     new JL_WP_Plugins_Pack_Baby_Poll();
+    new JL_WP_Plugins_Pack_Webstats();
 });
