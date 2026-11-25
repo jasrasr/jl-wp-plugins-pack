@@ -11,7 +11,7 @@ Custom WordPress content utilities for Jason Lamb sites.
 
 ### Bulk missing excerpts
 
-- Adds `Tools -> JL WP Plugins Pack`.
+- Adds `JL WP Plugins Pack -> Bulk Excerpts`.
 - Finds published posts/pages with empty excerpts.
 - Generates excerpts from existing content.
 - Includes dry-run mode and batch controls.
@@ -33,7 +33,7 @@ Custom WordPress content utilities for Jason Lamb sites.
 - Adds the [jl_poll] shortcode for polls with a custom question and 2–8 choices.
 - Give each poll a unique ID to keep its results separate.
 - Shows vote totals and percentages after a visitor votes.
-- Adds Tools -> JL Polls to view and edit each named choice total, including zero-vote choices, or reset one poll without affecting the others. For older polls with missing names, enter the option names in shortcode order (for example, `Boy|Girl`) and save. Manually entered names stay in place when the poll page is viewed.
+- Adds JL WP Plugins Pack -> JL Polls to view and edit each named choice total, including zero-vote choices, or reset one poll without affecting the others. For older polls with missing names, enter the option names in shortcode order (for example, `Boy|Girl`) and save. Manually entered names stay in place when the poll page is viewed.
 - Stores aggregate totals in WordPress options. A one-year first-party cookie per poll discourages repeat voting in the same browser; no voter names, email addresses, IP addresses, or user-agent strings are stored.
 - Keeps [jl_baby_gender_poll] as a Boy/Girl shortcut.
 
@@ -44,9 +44,16 @@ Example:
 [jl_baby_gender_poll question="Will Baby Lamb be a boy or a girl?"]
 ```
 
+### JL Webstats
+
+- Available in JL WP Plugins Pack 1.5.3 or later.
+- In WordPress, sign in as an administrator and open **JL WP Plugins Pack → JL Webstats**.
+- Add the site's origin (for example, `https://example.com`) to the central Webstats collector's allowlist. Then select **Track public page views and clicks** and save.
+- Tracking is off by default on each site. When enabled, the plugin loads the central tracker on public-facing pages for visitors without administrator privileges. Clear the checkbox and save to disable tracking.
+
 ### GitHub PowerShell drafts
 
-- Adds `Tools -> JL GitHub Drafts`.
+- Adds `JL WP Plugins Pack -> JL GitHub Drafts`.
 - Monitors `jasrasr/powershell`, branch `main`, for new `.ps1` files.
 - Runs weekly by default, with a daily option.
 - Includes a manual **Save and Run Check Now** button.
@@ -76,7 +83,7 @@ The header parser supports:
 1. In WordPress admin, open:
 
    ```text
-   Tools -> JL GitHub Drafts
+   JL WP Plugins Pack -> JL GitHub Drafts
    ```
 
 2. Choose weekly or daily scans and save the settings.
@@ -103,7 +110,7 @@ Each scan performs:
 - At most 20 changed/new files per scan to protect shared hosting and stay within unauthenticated GitHub API limits.
 
 4. **Scheduled AI-assisted blog posts**
-   - Adds a scheduled AI blog post generator under `Tools -> JL AI Posts`.
+   - Adds a scheduled AI blog post generator under `JL WP Plugins Pack -> JL AI Posts`.
    - Uses WP-Cron to generate one post per run.
    - Supports hourly, twice-daily, daily, and weekly schedules.
    - Lets you choose the WordPress author account used for generated posts.
@@ -113,15 +120,15 @@ Each scan performs:
 
 5. **Ask My Writing**
    - Creates an `Ask My Writing` page at `/ask/` the first time a site administrator opens WordPress after installing this version. If a page with that slug already exists, the plugin leaves its content unchanged.
-   - Adds `Tools -> JL Ask My Writing` for index status, answer model settings, and a resumable manual index build.
+   - Adds `JL WP Plugins Pack -> JL Ask My Writing` for index status, answer model settings, and a resumable manual index build.
    - Indexes published posts and pages as coherent passages. Each JSONL line includes the passage text, embedding, title, URL, date, and post ID.
    - Uses OpenAI `text-embedding-3-small` for semantic retrieval and the selected chat model for answers grounded in retrieved source passages.
-   - Reuses the API key from `Tools -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
+   - Reuses the API key from `JL WP Plugins Pack -> JL AI Posts` or the `JL_WP_PLUGINS_PACK_OPENAI_API_KEY` constant. API usage is billed separately by OpenAI.
    - Stores generated files under `public_html/ask-data/`, outside this plugin repository. On multisite, each site uses its own `site-{blog-id}/` subdirectory. This avoids a physical `/ask/` directory conflicting with WordPress routing. The plugin writes `.htaccess` access rules and an `index.php` guard in the data directory.
    - Limits public searches to eight requests per minute per IP address. Signed-in administrators bypass this limit.
    - Excludes password-protected posts, rechecks that indexed sources are still public before returning them, and serializes concurrent index builds and per-IP rate-limit updates.
 
-To initialize it, configure the OpenAI API key if it is not already set, open `Tools -> JL Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
+To initialize it, configure the OpenAI API key if it is not already set, open `JL WP Plugins Pack -> JL Ask My Writing`, and click **Build / Resume Search Index**. The index is rebuilt in small requests and replaced only after a full build completes. Click the button again after publishing or editing writing to refresh the index.
 
 The `.htaccess` protection is used for the data directory. If the web server ignores `.htaccess`, configure the equivalent deny rule in the server configuration before making the feature public.
 
@@ -149,15 +156,15 @@ jl-wp-plugins-pack/
 2. Install this repository through Git Updater:
    - https://github.com/jasrasr/jl-wp-plugins-pack
 3. Activate **JL WP Plugins Pack**.
-4. Open `Tools -> JL WP Plugins Pack` for excerpt and hashtag tools.
-5. Open `Tools -> JL GitHub Drafts` for GitHub script monitoring.
+4. Open `JL WP Plugins Pack -> Bulk Excerpts` for excerpt and hashtag tools.
+5. Open `JL WP Plugins Pack -> JL GitHub Drafts` for GitHub script monitoring.
 
 ### Manual ZIP upload
 
 1. Download or build `jl-wp-plugins-pack.zip`.
 2. Open `Plugins -> Add New -> Upload Plugin`.
 3. Upload and activate the plugin.
-4. Open `Tools -> JL AI Posts` for scheduled AI post setup.
+4. Open `JL WP Plugins Pack -> JL AI Posts` for scheduled AI post setup.
 
 ## Scheduled AI posts setup
 
@@ -177,7 +184,7 @@ Use this if you want the plugin to draft or publish posts automatically.
 2. Open:
 
    ```text
-   WordPress Admin -> Tools -> JL AI Posts
+   WordPress Admin -> JL WP Plugins Pack -> JL AI Posts
    ```
 
 3. Add your OpenAI API key in the plugin settings page.

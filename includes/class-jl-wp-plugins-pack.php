@@ -3,7 +3,7 @@
  * JL WP Plugins Pack
  *
  * Features:
- * - Manual batch generation of missing excerpts from Tools -> JL WP Plugins Pack
+ * - Manual batch generation of missing excerpts from JL WP Plugins Pack -> Bulk Excerpts
  * - Automatic excerpt generation when saving posts
  * - Hashtag linking and hashtag-to-tag syncing
  */
@@ -13,6 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 class JL_WP_Plugins_Pack {
+    const MENU_SLUG = 'jl-wp-plugins-pack';
     const NONCE_ACTION = 'jl_content_tools_excerpt_run';
     const NONCE_NAME   = 'jl_content_tools_excerpt_nonce';
 
@@ -30,11 +31,19 @@ class JL_WP_Plugins_Pack {
     }
 
     public function add_tools_page() {
-        add_management_page(
+        add_menu_page(
             'JL WP Plugins Pack',
             'JL WP Plugins Pack',
             'manage_options',
-            'jl-wp-plugins-pack',
+            self::MENU_SLUG,
+            [$this, 'render_page']
+        );
+        add_submenu_page(
+            self::MENU_SLUG,
+            'JL WP Plugins Pack',
+            'Bulk Excerpts',
+            'manage_options',
+            self::MENU_SLUG,
             [$this, 'render_page']
         );
     }

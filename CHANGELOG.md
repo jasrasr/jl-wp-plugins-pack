@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-25 - 1.5.3
+
+- Group Bulk Excerpts, GitHub Drafts, AI Posts, Ask My Writing, Polls, and Webstats under the **JL WP Plugins Pack** admin menu.
+- Add opt-in tracking of public page views and clicks under **JL WP Plugins Pack → JL Webstats**.
+- Document how to configure the central Webstats collector and enable tracking in WordPress.
+
 ## 2026-11-01 - 1.5.2
 
 - Let administrators enter option names in voting order for polls whose older vote totals have no saved labels.

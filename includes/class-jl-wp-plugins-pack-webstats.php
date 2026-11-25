@@ -16,7 +16,7 @@ final class JL_WP_Plugins_Pack_Webstats {
     }
 
     public function add_settings_page(): void {
-        add_options_page('JL Webstats', 'JL Webstats', 'manage_options', self::GROUP, [$this, 'render_settings']);
+        add_submenu_page(JL_WP_Plugins_Pack::MENU_SLUG, 'JL Webstats', 'JL Webstats', 'manage_options', self::GROUP, [$this, 'render_settings']);
     }
 
     public function register_settings(): void {

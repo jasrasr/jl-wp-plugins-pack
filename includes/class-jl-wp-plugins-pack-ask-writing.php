@@ -58,7 +58,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
     }
 
     public function add_tools_page() {
-        add_management_page('JL Ask My Writing', 'JL Ask My Writing', 'manage_options', 'jl-ask-my-writing', [$this, 'render_admin_page']);
+        add_submenu_page(JL_WP_Plugins_Pack::MENU_SLUG, 'JL Ask My Writing', 'JL Ask My Writing', 'manage_options', 'jl-ask-my-writing', [$this, 'render_admin_page']);
     }
 
     public function render_admin_page() {
@@ -93,7 +93,7 @@ class JL_WP_Plugins_Pack_Ask_Writing {
                 <div class="notice notice-info"><p>An existing <code>/ask/</code> page was left unchanged. Add the shortcode <code>[jl_ask_writing]</code> to that page to display the question interface.</p></div>
             <?php endif; ?>
             <?php if (!$key_available) : ?>
-                <div class="notice notice-warning"><p>Add an OpenAI API key under <strong>Tools → JL AI Posts</strong>, or define <code>JL_WP_PLUGINS_PACK_OPENAI_API_KEY</code> in <code>wp-config.php</code>. This feature uses that existing key for embeddings and answers.</p></div>
+                <div class="notice notice-warning"><p>Add an OpenAI API key under <strong>JL WP Plugins Pack → JL AI Posts</strong>, or define <code>JL_WP_PLUGINS_PACK_OPENAI_API_KEY</code> in <code>wp-config.php</code>. This feature uses that existing key for embeddings and answers.</p></div>
             <?php endif; ?>
             <h2>Index status</h2>
             <table class="widefat striped" style="max-width:800px"><tbody>

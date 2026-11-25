@@ -84,7 +84,9 @@ class JL_WP_Plugins_Pack_Baby_Poll {
         wp_safe_redirect(wp_get_referer()?:home_url('/')); exit;
     }
 
-    public function admin_menu(){ add_management_page('JL Polls','JL Polls','manage_options','jl-polls',[$this,'admin_page']); }
+    public function admin_menu() {
+        add_submenu_page(JL_WP_Plugins_Pack::MENU_SLUG, 'JL Polls', 'JL Polls', 'manage_options', 'jl-polls', [$this, 'admin_page']);
+    }
     public function admin_page() {
         if (!current_user_can('manage_options')) return;
         $all = get_option(self::OPTION, []);
@@ -143,7 +145,7 @@ class JL_WP_Plugins_Pack_Baby_Poll {
             foreach ($counts as $index => $count) $all[$id][absint($index)] = absint($count);
         }
         update_option(self::OPTION, $all, false);
-        wp_safe_redirect(admin_url('tools.php?page=jl-polls'));
+        wp_safe_redirect(admin_url('admin.php?page=jl-polls'));
         exit;
     }
 }

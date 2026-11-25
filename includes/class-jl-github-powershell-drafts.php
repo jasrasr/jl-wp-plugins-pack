@@ -76,7 +76,8 @@ class JL_GitHub_PowerShell_Drafts {
     }
 
     public function add_tools_page() {
-        add_management_page(
+        add_submenu_page(
+            JL_WP_Plugins_Pack::MENU_SLUG,
             'JL GitHub PowerShell Drafts',
             'JL GitHub Drafts',
             'manage_options',

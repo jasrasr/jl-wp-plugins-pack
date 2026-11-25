@@ -27,7 +27,9 @@ class JL_WP_Plugins_Pack_AI_Posts {
         return $s;
     }
 
-    public function add_tools_page() { add_management_page('JL AI Posts','JL AI Posts','manage_options','jl-wp-plugins-pack-ai-posts',[$this,'render_page']); }
+    public function add_tools_page() {
+        add_submenu_page(JL_WP_Plugins_Pack::MENU_SLUG, 'JL AI Posts', 'JL AI Posts', 'manage_options', 'jl-wp-plugins-pack-ai-posts', [$this, 'render_page']);
+    }
 
     public function render_page() {
         if (!current_user_can('manage_options')) { wp_die(esc_html__('You do not have permission to access this page.','jl-wp-plugins-pack')); }

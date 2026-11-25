@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: JL WP Plugins Pack
- * Description: WordPress content utilities, including excerpts, hashtag linking, AI-assisted posts, GitHub PowerShell drafts, and semantic search of published writing, and a baby gender guessing poll.
- * Version: 1.5.2
+ * Description: WordPress content utilities, including excerpts, hashtag linking, AI-assisted posts, GitHub PowerShell drafts, semantic search of published writing, a baby gender guessing poll, and opt-in page view and click tracking with JL Webstats.
+ * Version: 1.5.3
  * Author: Jason Lamb
  * Primary Branch: main
  * GitHub Plugin URI: https://github.com/jasrasr/jl-wp-plugins-pack
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('JL_WP_PLUGINS_PACK_VERSION', '1.5.2');
+define('JL_WP_PLUGINS_PACK_VERSION', '1.5.3');
 define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', __FILE__);
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
