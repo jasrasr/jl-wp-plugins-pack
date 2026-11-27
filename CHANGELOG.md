@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-27 - 1.5.5
+
+- Add disabled-by-default Konami Code, YOURLS short-link, custom 404, and combined post visibility utilities under JL Site Utilities.
+- Add explicit imports for the original plugins' saved WordPress options, existing YOURLS post metadata, Search Exclude IDs, and Hide Posts rules. Original plugin data is not removed.
+- Pause each replacement while its original plugin is active, and document staged migration and known feature limits.
+
+## 2026-11-26 - 1.5.4
+
+- Replace the bulk excerpt dry run and immediate write with a reviewable preview.
+- Add editable excerpt fields, row and batch approval, selection, and regeneration controls.
+- Recheck post eligibility and source content before saving an approved excerpt.
+
 ## 2026-11-25 - 1.5.3
 
 - Group Bulk Excerpts, GitHub Drafts, AI Posts, Ask My Writing, Polls, and Webstats under the **JL WP Plugins Pack** admin menu.

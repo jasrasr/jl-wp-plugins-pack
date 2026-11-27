@@ -53,43 +53,91 @@ class JL_WP_Plugins_Pack {
             wp_die(esc_html__('You do not have permission to access this page.', 'jl-wp-plugins-pack'));
         }
 
-        $result = null;
-        $request_method = isset($_SERVER['REQUEST_METHOD']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) : 'GET';
-
-        if ($request_method === 'POST' && isset($_POST['jl_run_excerpt_generator'])) {
-            check_admin_referer(self::NONCE_ACTION, self::NONCE_NAME);
-
-            if (!current_user_can('manage_options')) {
-                wp_die(esc_html__('You do not have permission to run this tool.', 'jl-wp-plugins-pack'));
-            }
-
-            $dry_run    = isset($_POST['dry_run']);
-            $word_count = isset($_POST['word_count']) ? max(10, min(100, absint(wp_unslash($_POST['word_count'])))) : self::DEFAULT_WORD_COUNT;
-            $batch_size = isset($_POST['batch_size']) ? max(1, min(100, absint(wp_unslash($_POST['batch_size'])))) : 25;
-            $post_type  = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'post';
-
-            if (!in_array($post_type, ['post', 'page'], true)) {
-                $post_type = 'post';
-            }
-
-            $result = $this->generate_missing_excerpts($dry_run, $word_count, $batch_size, $post_type);
+        $items = null;
+        $message = '';
+        $errors = [];
+        $request_method = isset($_SERVER['REQUEST_METHOD']) && is_string($_SERVER['REQUEST_METHOD']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) : 'GET';
+        $selected_post_type  = isset($_POST['post_type']) && is_string($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'post';
+        $selected_word_count = isset($_POST['word_count']) && is_scalar($_POST['word_count']) ? max(10, min(100, absint(wp_unslash($_POST['word_count'])))) : self::DEFAULT_WORD_COUNT;
+        $selected_batch_size = isset($_POST['batch_size']) && is_scalar($_POST['batch_size']) ? max(1, min(100, absint(wp_unslash($_POST['batch_size'])))) : 25;
+        if (!in_array($selected_post_type, ['post', 'page'], true)) {
+            $selected_post_type = 'post';
         }
 
-        $selected_post_type  = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'post';
-        $selected_word_count = isset($_POST['word_count']) ? max(10, min(100, absint(wp_unslash($_POST['word_count'])))) : self::DEFAULT_WORD_COUNT;
-        $selected_batch_size = isset($_POST['batch_size']) ? max(1, min(100, absint(wp_unslash($_POST['batch_size'])))) : 25;
-        $selected_dry_run    = !isset($_POST['jl_run_excerpt_generator']) || isset($_POST['dry_run']);
+        if ($request_method === 'POST' && (isset($_POST['jl_generate_excerpt_preview']) || isset($_POST['jl_excerpt_action']))) {
+            check_admin_referer(self::NONCE_ACTION, self::NONCE_NAME);
+            if (isset($_POST['jl_generate_excerpt_preview'])) {
+                $items = $this->generate_missing_excerpts($selected_word_count, $selected_batch_size, $selected_post_type);
+                $message = 'Preview generated. Review the excerpts below, then approve the ones you want to save.';
+            } else {
+                $items = $this->read_review_items($selected_post_type, $errors);
+                $action = is_string($_POST['jl_excerpt_action']) ? sanitize_text_field(wp_unslash($_POST['jl_excerpt_action'])) : '';
+                $targets = [];
+                if (in_array($action, ['approve_all', 'regenerate_all'], true)) {
+                    $targets = array_keys($items);
+                } elseif (in_array($action, ['approve_selected', 'regenerate_selected'], true)) {
+                    $selected = isset($_POST['selected']) && is_array($_POST['selected']) ? $_POST['selected'] : [];
+                    $targets = array_intersect(array_keys($items), array_map('absint', array_keys($selected)));
+                } elseif (preg_match('/^(approve|regenerate):([1-9][0-9]*)$/', $action, $matches) && isset($items[(int) $matches[2]])) {
+                    $targets = [(int) $matches[2]];
+                }
+
+                if (!$targets) {
+                    $errors[] = 'Select at least one excerpt to approve or regenerate.';
+                } else {
+                    $approved = 0;
+                    $regenerated = 0;
+                    foreach ($targets as $id) {
+                        $post = get_post($id);
+                        if (!$post || $post->post_status !== 'publish' || $post->post_type !== $selected_post_type || trim((string) $post->post_excerpt) !== '' || !current_user_can('edit_post', $id)) {
+                            unset($items[$id]);
+                            $errors[] = 'Post ' . $id . ' is no longer eligible for a missing excerpt.';
+                            continue;
+                        }
+                        if (strpos($action, 'regenerate') === 0) {
+                            $excerpt = $this->make_excerpt($post->post_content, $selected_word_count);
+                            if ($excerpt === '') {
+                                $errors[] = 'Post ' . $id . ' has no usable content for an excerpt.';
+                                continue;
+                            }
+                            $items[$id]['excerpt'] = $excerpt;
+                            $items[$id]['content_hash'] = hash('sha256', (string) $post->post_content);
+                            $regenerated++;
+                        } else {
+                            if ($items[$id]['content_hash'] !== hash('sha256', (string) $post->post_content)) {
+                                $errors[] = 'Post ' . $id . ' changed since the preview. Regenerate it before approving.';
+                                continue;
+                            }
+                            if ($items[$id]['excerpt'] === '') {
+                                $errors[] = 'Post ' . $id . ' needs a nonempty excerpt.';
+                                continue;
+                            }
+                            $saved = wp_update_post(['ID' => $id, 'post_excerpt' => $items[$id]['excerpt']], true);
+                            if (is_wp_error($saved) || !$saved) {
+                                $errors[] = 'Post ' . $id . ' could not be updated.';
+                                continue;
+                            }
+                            unset($items[$id]);
+                            $approved++;
+                        }
+                    }
+                    if ($approved) {
+                        $message = $approved . ' excerpt' . ($approved === 1 ? '' : 's') . ' approved and saved.';
+                    } elseif ($regenerated) {
+                        $message = $regenerated . ' excerpt' . ($regenerated === 1 ? '' : 's') . ' regenerated. Review before approving.';
+                    }
+                }
+            }
+        }
 
         ?>
         <div class="wrap">
             <h1>JL WP Plugins Pack</h1>
 
             <h2>Bulk Missing Excerpts</h2>
-            <p>This tool generates missing excerpts from existing published post or page content.</p>
-
-            <div class="notice notice-warning inline">
-                <p><strong>Recommendation :</strong> Run this in dry-run mode first. Then run one small batch and verify the excerpts before processing everything. WordPress gremlins love confidence.</p>
-            </div>
+            <p>Generate a preview from published posts or pages with empty excerpts. Edit or regenerate each suggestion, then approve individual excerpts, selected excerpts, or the whole batch.</p>
+            <?php if ($message !== '') : ?><div class="notice notice-success inline"><p><?php echo esc_html($message); ?></p></div><?php endif; ?>
+            <?php foreach ($errors as $error) : ?><div class="notice notice-error inline"><p><?php echo esc_html($error); ?></p></div><?php endforeach; ?>
 
             <form method="post">
                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
@@ -118,20 +166,61 @@ class JL_WP_Plugins_Pack {
                             <p class="description">Keep this modest on shared hosting.</p>
                         </td>
                     </tr>
-                    <tr>
-                        <th scope="row">Dry Run</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="dry_run" <?php checked($selected_dry_run); ?> /> Preview only. Do not update posts.
-                            </label>
-                        </td>
-                    </tr>
                 </table>
 
                 <p>
-                    <button type="submit" name="jl_run_excerpt_generator" class="button button-primary">Run Excerpt Generator</button>
+                    <button type="submit" name="jl_generate_excerpt_preview" value="1" class="button button-primary">Generate Preview</button>
                 </p>
             </form>
+
+            <?php if ($items !== null) : ?>
+                <h2>Review Excerpts</h2>
+                <?php if ($items) : ?>
+                    <p>Edits and selections stay in this form until you submit an action. To make a different suggestion, change the length below and regenerate. Generating a new preview starts a new batch.</p>
+                    <form method="post">
+                        <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME); ?>
+                        <input type="hidden" name="post_type" value="<?php echo esc_attr($selected_post_type); ?>" />
+                        <input type="hidden" name="batch_size" value="<?php echo esc_attr((string) $selected_batch_size); ?>" />
+                        <p><label for="jl-review-word-count">Regeneration length</label> <input type="number" name="word_count" id="jl-review-word-count" value="<?php echo esc_attr((string) $selected_word_count); ?>" min="10" max="100" /> words</p>
+                        <table class="widefat striped">
+                            <thead><tr>
+                                <th scope="col"><label><input type="checkbox" id="jl-select-all-excerpts" /> Select all</label></th>
+                                <th scope="col">Post</th><th scope="col">Excerpt</th><th scope="col">Actions</th>
+                            </tr></thead>
+                            <tbody>
+                                <?php foreach ($items as $item) : ?>
+                                    <tr>
+                                        <td><input type="checkbox" class="jl-excerpt-select" name="selected[<?php echo esc_attr((string) $item['id']); ?>]" value="1" aria-label="Select excerpt for <?php echo esc_attr($item['title']); ?>" /></td>
+                                        <td><a href="<?php echo esc_url(get_edit_post_link($item['id'])); ?>"><?php echo esc_html($item['title']); ?></a><br /><small>ID <?php echo esc_html((string) $item['id']); ?></small></td>
+                                        <td>
+                                            <label class="screen-reader-text" for="jl-excerpt-<?php echo esc_attr((string) $item['id']); ?>">Excerpt for <?php echo esc_html($item['title']); ?></label>
+                                            <textarea id="jl-excerpt-<?php echo esc_attr((string) $item['id']); ?>" name="items[<?php echo esc_attr((string) $item['id']); ?>][excerpt]" rows="4" class="large-text"><?php echo esc_textarea($item['excerpt']); ?></textarea>
+                                            <input type="hidden" name="items[<?php echo esc_attr((string) $item['id']); ?>][content_hash]" value="<?php echo esc_attr($item['content_hash']); ?>" />
+                                        </td>
+                                        <td>
+                                            <button type="submit" name="jl_excerpt_action" value="approve:<?php echo esc_attr((string) $item['id']); ?>" class="button button-primary">Approve</button>
+                                            <button type="submit" name="jl_excerpt_action" value="regenerate:<?php echo esc_attr((string) $item['id']); ?>" class="button">Regenerate</button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <p>
+                            <button type="submit" name="jl_excerpt_action" value="approve_selected" class="button button-primary">Approve Selected</button>
+                            <button type="submit" name="jl_excerpt_action" value="approve_all" class="button button-primary">Approve All</button>
+                            <button type="submit" name="jl_excerpt_action" value="regenerate_selected" class="button">Regenerate Selected</button>
+                            <button type="submit" name="jl_excerpt_action" value="regenerate_all" class="button">Regenerate All</button>
+                        </p>
+                    </form>
+                    <script>
+                    document.getElementById('jl-select-all-excerpts').addEventListener('change', function () {
+                        document.querySelectorAll('.jl-excerpt-select').forEach(function (box) { box.checked = this.checked; }, this);
+                    });
+                    </script>
+                <?php else : ?>
+                    <p>No excerpts remain in this preview. Generate another batch to continue.</p>
+                <?php endif; ?>
+            <?php endif; ?>
 
             <hr />
 
@@ -145,36 +234,6 @@ class JL_WP_Plugins_Pack {
             <p>When a post is saved, hashtag words are appended as WordPress tags. Existing manual tags are preserved.</p>
             <p><strong>Ignored areas :</strong> existing links, code blocks, preformatted blocks, scripts, styles, and HTML comments.</p>
 
-            <?php if ($result) : ?>
-                <hr />
-                <h2>Batch Result</h2>
-                <p><strong>Mode :</strong> <?php echo esc_html($result['dry_run'] ? 'Dry run' : 'Updated database'); ?></p>
-                <p><strong>Items checked :</strong> <?php echo esc_html((string) $result['checked']); ?></p>
-                <p><strong>Items updated :</strong> <?php echo esc_html((string) $result['updated']); ?></p>
-
-                <?php if (!empty($result['items'])) : ?>
-                    <table class="widefat striped">
-                        <thead>
-                            <tr>
-                                <th>Post ID</th>
-                                <th>Title</th>
-                                <th>Generated Excerpt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($result['items'] as $item) : ?>
-                                <tr>
-                                    <td><?php echo esc_html((string) $item['id']); ?></td>
-                                    <td><a href="<?php echo esc_url(get_edit_post_link($item['id'])); ?>"><?php echo esc_html($item['title']); ?></a></td>
-                                    <td><?php echo esc_html($item['excerpt']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php else : ?>
-                    <p>No published <?php echo esc_html($result['post_type']); ?> items with empty excerpts were found in this batch.</p>
-                <?php endif; ?>
-            <?php endif; ?>
         </div>
         <?php
     }
@@ -318,7 +377,7 @@ class JL_WP_Plugins_Pack {
         );
     }
 
-    private function generate_missing_excerpts($dry_run, $word_count, $batch_size, $post_type) {
+    private function generate_missing_excerpts($word_count, $batch_size, $post_type) {
         global $wpdb;
 
         $posts = $wpdb->get_results(
@@ -329,46 +388,50 @@ class JL_WP_Plugins_Pack {
             )
         );
 
-        $checked = 0;
-        $updated = 0;
-        $items   = [];
+        $items = [];
 
         foreach ($posts as $post) {
-            $checked++;
+            if (!current_user_can('edit_post', $post->ID)) {
+                continue;
+            }
             $excerpt = $this->make_excerpt($post->post_content, $word_count);
 
             if ($excerpt === '') {
                 continue;
             }
 
-            $items[] = [
+            $items[(int) $post->ID] = [
                 'id'      => (int) $post->ID,
                 'title'   => get_the_title((int) $post->ID),
                 'excerpt' => $excerpt,
+                'content_hash' => hash('sha256', (string) $post->post_content),
             ];
-
-            if (!$dry_run) {
-                $update_result = wp_update_post(
-                    [
-                        'ID'           => (int) $post->ID,
-                        'post_excerpt' => $excerpt,
-                    ],
-                    true
-                );
-
-                if (!is_wp_error($update_result)) {
-                    $updated++;
-                }
-            }
         }
 
-        return [
-            'dry_run'   => (bool) $dry_run,
-            'checked'   => (int) $checked,
-            'updated'   => (int) $updated,
-            'items'     => $items,
-            'post_type' => $post_type,
-        ];
+        return $items;
+    }
+
+    private function read_review_items($post_type, &$errors) {
+        $submitted = isset($_POST['items']) && is_array($_POST['items']) ? wp_unslash($_POST['items']) : [];
+        $items = [];
+        foreach (array_slice($submitted, 0, 100, true) as $key => $row) {
+            $id = absint($key);
+            if (!$id || !is_array($row)) {
+                continue;
+            }
+            $post = get_post($id);
+            if (!$post || $post->post_type !== $post_type || $post->post_status !== 'publish' || trim((string) $post->post_excerpt) !== '' || !current_user_can('edit_post', $id)) {
+                $errors[] = 'Post ' . $id . ' is no longer eligible for a missing excerpt.';
+                continue;
+            }
+            $items[$id] = [
+                'id' => $id,
+                'title' => get_the_title($id),
+                'excerpt' => isset($row['excerpt']) && is_string($row['excerpt']) ? trim(sanitize_textarea_field($row['excerpt'])) : '',
+                'content_hash' => isset($row['content_hash']) && is_string($row['content_hash']) ? sanitize_text_field($row['content_hash']) : '',
+            ];
+        }
+        return $items;
     }
 
     private function make_excerpt($content, $word_count) {

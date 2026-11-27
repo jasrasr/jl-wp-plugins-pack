@@ -6,6 +6,7 @@ Custom WordPress content utilities for Jason Lamb sites.
 - GitHub repository: https://github.com/jasrasr/jl-wp-plugins-pack
 - Git Updater: https://github.com/afragen/git-updater
 - Git Updater website: https://git-updater.com/
+- JL WP Updater: https://github.com/jasrasr/jl-wp-updater
 
 ## Features
 
@@ -13,8 +14,10 @@ Custom WordPress content utilities for Jason Lamb sites.
 
 - Adds `JL WP Plugins Pack -> Bulk Excerpts`.
 - Finds published posts/pages with empty excerpts.
-- Generates excerpts from existing content.
-- Includes dry-run mode and batch controls.
+- Generates a reviewable batch of suggestions from existing content without saving them.
+- Lets administrators edit, regenerate, and approve one, selected, or all excerpts in the batch.
+- Checks that source content and excerpt eligibility have not changed before approval.
+- Includes excerpt length and batch size controls. Change regeneration length to get a different suggestion. Generating a new preview discards unapproved edits in the current preview.
 
 ### Automatic excerpts
 
@@ -50,6 +53,22 @@ Example:
 - In WordPress, sign in as an administrator and open **JL WP Plugins Pack → JL Webstats**.
 - Add the site's origin (for example, `https://example.com`) to the central Webstats collector's allowlist. Then select **Track public page views and clicks** and save.
 - Tracking is off by default on each site. When enabled, the plugin loads the central tracker on public-facing pages for visitors without administrator privileges. Clear the checkbox and save to disable tracking.
+
+### Optional site utilities
+
+Version 1.5.5 adds **JL WP Plugins Pack → JL Site Utilities**. Each replacement starts disabled and pauses while its original plugin is active. The import buttons copy settings from the live WordPress database; downloaded plugin files do not contain a site's saved settings, short links, selected 404 page, or per-post hiding rules.
+
+| Replacement | What it provides | Imported data |
+| --- | --- | --- |
+| WP Konami Code | Keyboard and touch Konami sequence leading to a chosen page or URL; optional search exclusion and noindex on the target page | Page, URL, and visibility settings from `wp_konami_code_options` |
+| YOURLS Link Creator | Manual or on-publish short links, optional WordPress shortlink override, and scheduled click-count refresh | YOURLS URL, API signature, post types, and creation settings from `yourls_options`; existing `_yourls_url` and `_yourls_clicks` post metadata are reused |
+| Smart Custom 404 Error Page | Render a selected published page with HTTP 404 status, with optional direct-page 404, search/sitemap hiding, and disabled URL guessing | Page and supported settings from `404page_settings` |
+| Search Exclude | Per-post exclusion from native WordPress site search | Post IDs from `sep_exclude` |
+| Hide Posts | Per-post controls for home and archive listings, search, RSS, WooCommerce listings, REST collections, recent-post widgets, navigation, direct pages, and sitemaps | Rules from the `whp_posts_visibility` table or older `_whp_` post metadata |
+
+To migrate: back up the WordPress database and files; install this pack update; import each original's settings **while the original and its database data still exist**; review affected posts and settings; enable one replacement; deactivate that original; test its public and admin behavior; then delete the original only after the result is verified. Imported settings do not automatically enable a replacement or delete original data. For Search Exclude and Hide Posts, deactivate both originals before the combined Post Visibility feature takes effect.
+
+The YOURLS replacement requires an HTTPS YOURLS endpoint before sending an API signature. It reuses existing short URLs, preserves the original template tags for themes, and refreshes up to five saved click counts per hourly WP-Cron run. It does not include the old plugin's bulk import, delete-link, or API status screen. The custom 404 replacement does not reproduce the original plugin's HTTP 410 modes or multilingual integrations; its import message calls out saved 410 settings. Native WordPress search exclusions do not automatically control a separate Jetpack Search index. Verify any such search experience separately. Post visibility controls filter presentation and discovery; use WordPress private or password-protected content for access control.
 
 ### GitHub PowerShell drafts
 
@@ -148,6 +167,14 @@ jl-wp-plugins-pack/
 ```
 
 ## Install on a new WordPress site
+
+### Choose an update provider
+
+Git Updater and JL WP Updater can both offer updates for this plugin. Configure only one of them to manage each installed plugin or theme. JL WP Updater uses stable GitHub releases with an installable ZIP asset; Git Updater follows the GitHub repository headers described below.
+
+If both update plugins are installed, review **Tools → JL WP Updater** and Git Updater's managed items before applying updates. JL WP Updater initially selects JL WP Plugins Pack and JL WP Theme Dark when they are installed. Deselect an item in one updater if the other will manage it. The active configuration on any particular WordPress site must be checked in its admin screens.
+
+To use JL WP Updater for this pack, install the pack from its release ZIP, install and activate JL WP Updater, and select **JL WP Plugins Pack** in **Tools → JL WP Updater**. See the [JL WP Updater instructions](https://github.com/jasrasr/jl-wp-updater#readme) for its release asset requirements.
 
 ### Git Updater
 
