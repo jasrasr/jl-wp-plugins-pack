@@ -10,7 +10,8 @@ class JL_WP_Plugins_Pack_Visibility {
         'hide_on_categories', 'hide_on_tags', 'hide_on_authors', 'hide_on_date',
         'hide_on_search', 'hide_in_rss_feed', 'hide_on_store', 'hide_on_product_category',
         'hide_on_recent_posts', 'hide_on_post_navigation', 'hide_on_rest_api',
-        'hide_on_single_post_page', 'hide_on_sitemap',
+        'hide_on_single_post_page', 'hide_on_sitemap', 'hide_on_xml_sitemap',
+        'hide_on_yoast_sitemap', 'hide_on_yoast_breadcrumbs', 'hide_on_yoast_internal_links',
     ];
 
     private function active() {
@@ -33,9 +34,11 @@ class JL_WP_Plugins_Pack_Visibility {
         add_filter('get_previous_post_where', [$this, 'filter_navigation']);
         add_filter('wp_sitemaps_posts_query_args', [$this, 'filter_sitemap'], 10, 2);
         add_filter('wpseo_exclude_from_sitemap_by_post_ids', [$this, 'filter_yoast_sitemap']);
+        add_filter('wpseo_breadcrumb_links', [$this, 'filter_yoast_breadcrumbs']);
+        add_filter('wpseo_link_suggestions_indexables', [$this, 'filter_yoast_links'], 10, 3);
         add_action('init', [$this, 'register_rest_filters'], 20);
-        add_filter('woocommerce_rest_product_object_query', [$this, 'filter_rest_product']);
-        add_filter('woocommerce_rest_product_query', [$this, 'filter_rest_product']);
+        add_filter('woocommerce_rest_product_object_query', [$this, 'filter_rest_product'], 10, 2);
+        add_filter('woocommerce_rest_product_query', [$this, 'filter_rest_product'], 10, 2);
     }
 
     public function meta_boxes() {
@@ -68,6 +71,10 @@ class JL_WP_Plugins_Pack_Visibility {
             'hide_on_rest_api' => 'WordPress REST collections',
             'hide_on_single_post_page' => 'Direct page view (return 404)',
             'hide_on_sitemap' => 'Core and Yoast sitemaps',
+            'hide_on_xml_sitemap' => 'WordPress XML sitemap',
+            'hide_on_yoast_sitemap' => 'Yoast XML sitemap',
+            'hide_on_yoast_breadcrumbs' => 'Yoast breadcrumbs',
+            'hide_on_yoast_internal_links' => 'Yoast link suggestions',
         ];
         foreach ($labels as $key => $label) {
             echo '<p><label><input type="checkbox" name="jl_visibility[' . esc_attr($key) . ']" value="1" ' . checked(!empty($selected[$key]), true, false) . '> ' . esc_html($label) . '</label></p>';
@@ -126,6 +133,39 @@ class JL_WP_Plugins_Pack_Visibility {
         }
     }
 
+    private function filter_search_groups($query) {
+        $groups = JL_WP_Plugins_Pack_Site_Utilities::search_groups();
+        $ids = [];
+        foreach (isset($groups['entries']) && is_array($groups['entries']) ? $groups['entries'] : [] as $type => $rule) {
+            if (!is_array($rule) || !is_string($type) || !post_type_exists($type)) {
+                continue;
+            }
+            $ids = array_merge($ids, !empty($rule['all']) ? get_posts(['post_type' => $type, 'posts_per_page' => -1, 'fields' => 'ids']) : (array) ($rule['ids'] ?? []));
+        }
+        $this->exclude_ids($query, array_values(array_unique(array_map('absint', $ids))));
+        $clauses = [];
+        foreach (isset($groups['taxonomies']) && is_array($groups['taxonomies']) ? $groups['taxonomies'] : [] as $taxonomy => $rule) {
+            if (!is_array($rule) || !is_string($taxonomy) || !taxonomy_exists($taxonomy)) {
+                continue;
+            }
+            if (!empty($rule['all'])) {
+                $clauses[] = ['taxonomy' => $taxonomy, 'operator' => 'NOT EXISTS'];
+            } elseif (!empty($rule['ids'])) {
+                $clauses[] = ['taxonomy' => $taxonomy, 'field' => 'term_id', 'terms' => $rule['ids'], 'operator' => 'NOT IN'];
+            }
+        }
+        if ($clauses) {
+            $existing = $query->get('tax_query');
+            $query->set('tax_query', $existing ? array_merge(['relation' => 'AND', $existing], $clauses) : array_merge(['relation' => 'AND'], $clauses));
+        }
+        $author = isset($groups['author']) && is_array($groups['author']) ? $groups['author'] : [];
+        if (!empty($author['all'])) {
+            $query->set('post__in', [0]);
+        } elseif (!empty($author['ids'])) {
+            $query->set('author__not_in', array_values(array_unique(array_merge((array) $query->get('author__not_in'), $author['ids']))));
+        }
+    }
+
     public function filter_query($query) {
         if (is_admin()) {
             return;
@@ -133,6 +173,7 @@ class JL_WP_Plugins_Pack_Visibility {
         $conditions = [];
         if ($query->is_search()) {
             $conditions = ['search', 'hide_on_search'];
+            $this->filter_search_groups($query);
         } elseif ($query->is_feed()) {
             $conditions = ['hide_in_rss_feed'];
         } elseif ($query->is_home()) {
@@ -203,25 +244,54 @@ class JL_WP_Plugins_Pack_Visibility {
     }
 
     public function filter_rest($args, $request) {
+        if (is_object($request) && method_exists($request, 'get_param') && $request->get_param('context') === 'edit') {
+            return $args;
+        }
         $type = isset($args['post_type']) && is_string($args['post_type']) ? $args['post_type'] : '';
         $ids = $this->ids_for(['hide_on_rest_api'], $type);
         $args['post__not_in'] = array_values(array_unique(array_merge(isset($args['post__not_in']) ? (array) $args['post__not_in'] : [], $ids)));
         return $args;
     }
 
-    public function filter_rest_product($args) {
+    public function filter_rest_product($args, $request = null) {
+        if (is_object($request) && method_exists($request, 'get_param') && $request->get_param('context') === 'edit') {
+            return $args;
+        }
         $ids = $this->ids_for(['hide_on_rest_api'], 'product');
         $args['post__not_in'] = array_values(array_unique(array_merge(isset($args['post__not_in']) ? (array) $args['post__not_in'] : [], $ids)));
         return $args;
     }
 
     public function filter_sitemap($args, $post_type) {
-        $ids = $this->ids_for(['hide_on_sitemap'], $post_type);
+        $ids = $this->ids_for(['hide_on_sitemap', 'hide_on_xml_sitemap'], $post_type);
         $args['post__not_in'] = array_values(array_unique(array_merge(isset($args['post__not_in']) ? (array) $args['post__not_in'] : [], $ids)));
         return $args;
     }
 
     public function filter_yoast_sitemap($excluded) {
-        return array_values(array_unique(array_merge((array) $excluded, $this->ids_for(['hide_on_sitemap']))));
+        return array_values(array_unique(array_merge((array) $excluded, $this->ids_for(['hide_on_sitemap', 'hide_on_yoast_sitemap']))));
+    }
+
+    public function filter_yoast_breadcrumbs($links) {
+        if (!is_array($links)) {
+            return $links;
+        }
+        $hidden = $this->ids_for(['hide_on_yoast_breadcrumbs']);
+        foreach ($links as $key => $link) {
+            if (is_array($link) && !empty($link['id']) && in_array(absint($link['id']), $hidden, true)) {
+                unset($links[$key]);
+            }
+        }
+        return $links;
+    }
+
+    public function filter_yoast_links($suggestions, $object_id, $object_type) {
+        if ($object_type !== 'post' || !is_array($suggestions)) {
+            return $suggestions;
+        }
+        $hidden = $this->ids_for(['hide_on_yoast_internal_links']);
+        return array_values(array_filter($suggestions, static function ($suggestion) use ($hidden) {
+            return !is_object($suggestion) || !isset($suggestion->object_id) || !in_array(absint($suggestion->object_id), $hidden, true);
+        }));
     }
 }

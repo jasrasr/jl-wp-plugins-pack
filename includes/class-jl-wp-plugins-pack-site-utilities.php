@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 class JL_WP_Plugins_Pack_Site_Utilities {
     const OPTION = 'jl_wp_plugins_pack_site_utilities';
     const VISIBILITY_OPTION = 'jl_wp_plugins_pack_visibility_rules';
+    const SEARCH_GROUP_OPTION = 'jl_wp_plugins_pack_search_groups';
     const MENU_SLUG = 'jl-wp-plugins-pack-site-utilities';
 
     public static function defaults() {
@@ -53,6 +54,31 @@ class JL_WP_Plugins_Pack_Site_Utilities {
     public static function visibility_rules() {
         $rules = get_option(self::VISIBILITY_OPTION, []);
         return is_array($rules) ? $rules : [];
+    }
+
+    public static function search_groups() {
+        $groups = get_option(self::SEARCH_GROUP_OPTION, []);
+        return is_array($groups) ? $groups : [];
+    }
+
+    private static function clean_exclusion_group($value) {
+        if (!is_array($value)) {
+            return ['all' => false, 'ids' => []];
+        }
+        $ids = isset($value['ids']) && is_array($value['ids']) ? $value['ids'] : [];
+        return ['all' => !empty($value['all']), 'ids' => array_values(array_unique(array_filter(array_map('absint', $ids))))];
+    }
+
+    private static function clean_search_groups($old) {
+        $groups = ['entries' => [], 'taxonomies' => [], 'author' => self::clean_exclusion_group($old['author'] ?? [])];
+        foreach (['entries', 'taxonomies'] as $kind) {
+            foreach (isset($old[$kind]) && is_array($old[$kind]) ? $old[$kind] : [] as $name => $value) {
+                if (is_string($name) && sanitize_key($name) === $name) {
+                    $groups[$kind][$name] = self::clean_exclusion_group($value);
+                }
+            }
+        }
+        return $groups;
     }
 
     public function __construct() {
@@ -145,25 +171,36 @@ class JL_WP_Plugins_Pack_Site_Utilities {
                 }
             }
         } elseif ($source === 'search_exclude') {
-            $old = get_option('sep_exclude', false);
-            if (is_array($old)) {
-                $rules = self::visibility_rules();
-                $count = 0;
-                foreach ($old as $id) {
-                    $id = absint($id);
-                    if ($id && get_post($id)) {
-                        $rules[$id]['search'] = true;
-                        $count++;
-                    }
-                }
-                update_option(self::VISIBILITY_OPTION, $rules, false);
-                $message = $count . ' WordPress search exclusions copied.';
-            }
+            $message = $this->import_search_exclude();
         } elseif ($source === 'hide_posts') {
             $message = $this->import_hide_posts();
         }
         update_option(self::OPTION, $settings, false);
         $this->redirect($message);
+    }
+
+    private function import_search_exclude() {
+        $modern = get_option('qlse_settings', false);
+        $old = get_option('sep_exclude', false);
+        $messages = [];
+        if (is_array($modern)) {
+            update_option(self::SEARCH_GROUP_OPTION, self::clean_search_groups($modern), false);
+            $messages[] = 'Search Exclude 2.x post type, taxonomy, and author settings copied.';
+        }
+        if (is_array($old)) {
+            $rules = self::visibility_rules();
+            $count = 0;
+            foreach ($old as $id) {
+                $id = absint($id);
+                if ($id && get_post($id)) {
+                    $rules[$id]['search'] = true;
+                    $count++;
+                }
+            }
+            update_option(self::VISIBILITY_OPTION, $rules, false);
+            $messages[] = $count . ' older per-post search exclusions copied.';
+        }
+        return $messages ? implode(' ', $messages) : 'No matching Search Exclude settings were found.';
     }
 
     private function import_hide_posts() {

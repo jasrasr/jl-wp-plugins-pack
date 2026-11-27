@@ -20,6 +20,9 @@ function get_site_option($key, $default = false) { return $default; }
 function get_post($id) { global $posts; return $posts[$id] ?? null; }
 function get_post_type($id) { $post = get_post($id); return $post ? $post->post_type : false; }
 function get_post_status($id) { $post = get_post($id); return $post ? $post->post_status : false; }
+function post_type_exists($type) { return in_array($type, ['post', 'page'], true); }
+function taxonomy_exists($taxonomy) { return $taxonomy === 'category'; }
+function get_posts($args) { return $args['post_type'] === 'post' ? [7] : [8]; }
 function get_post_meta($id, $key, $single = false) { global $post_meta; return $post_meta[$id][$key] ?? ''; }
 function update_post_meta($id, $key, $value) { global $post_meta; $post_meta[$id][$key] = $value; return true; }
 function get_permalink($id) { return 'https://example.com/post/' . $id . '/'; }
@@ -67,7 +70,7 @@ class Fake_DB {
     public function prepare($sql, ...$args) { return vsprintf(str_replace(['%s', '%d'], ["'%s'", '%d'], $sql), $args); }
     public function get_var($sql) { return 'wp_whp_posts_visibility'; }
     public function get_results($sql, $format) {
-        if (strpos($sql, 'whp_posts_visibility') !== false) return [['post_id' => 7, 'condition' => 'hide_on_search']];
+        if (strpos($sql, 'whp_posts_visibility') !== false) return [['post_id' => 7, 'condition' => 'hide_on_search'], ['post_id' => 7, 'condition' => 'hide_on_xml_sitemap'], ['post_id' => 8, 'condition' => 'hide_on_yoast_breadcrumbs']];
         return [['post_id' => 8, 'meta_key' => '_whp_hide_on_categories', 'meta_value' => '1']];
     }
 }
@@ -97,6 +100,18 @@ $visibility = new JL_WP_Plugins_Pack_Visibility();
 $query = new Fake_Query(['search' => true, 'post__in' => [7, 8]]);
 $visibility->filter_query($query);
 expect($query->get('post__in') === [8], 'Search exclusion did not remove an included post.');
+$options['qlse_settings'] = [
+    'entries' => ['post' => ['all' => true, 'ids' => []]],
+    'taxonomies' => ['category' => ['all' => false, 'ids' => [4]]],
+    'author' => ['all' => false, 'ids' => [3]],
+];
+$import_search = new ReflectionMethod(new JL_WP_Plugins_Pack_Site_Utilities(), 'import_search_exclude');
+expect(strpos($import_search->invoke(new JL_WP_Plugins_Pack_Site_Utilities()), '2.x') !== false, 'Modern Search Exclude settings were not imported.');
+$query = new Fake_Query(['search' => true, 'post__in' => [7, 8], 'tax_query' => [['taxonomy' => 'category', 'terms' => [1]]]]);
+$visibility->filter_query($query);
+expect($query->get('post__in') === [8], 'Post type wide search exclusion was not applied.');
+expect($query->get('author__not_in') === [3], 'Author search exclusion was not applied.');
+expect($query->get('tax_query')['relation'] === 'AND' && count($query->get('tax_query')) === 3, 'Taxonomy exclusions did not combine with existing search rules.');
 $options[JL_WP_Plugins_Pack_Site_Utilities::VISIBILITY_OPTION][8] = ['hide_on_frontpage' => true];
 $GLOBALS['front_page'] = true;
 $static_home = new Fake_Query(['main' => true]);
@@ -104,14 +119,20 @@ $visibility->filter_query($static_home);
 expect(!$static_home->get('post__not_in'), 'A static home page must not exclude its own page.');
 $GLOBALS['front_page'] = false;
 
-$import = new ReflectionMethod($visibility = new JL_WP_Plugins_Pack_Site_Utilities(), 'import_hide_posts');
-$message = $import->invoke($visibility);
+$utilities = new JL_WP_Plugins_Pack_Site_Utilities();
+$import = new ReflectionMethod($utilities, 'import_hide_posts');
+$message = $import->invoke($utilities);
 $rules = JL_WP_Plugins_Pack_Site_Utilities::visibility_rules();
-expect(!empty($rules[7]['search']) && !empty($rules[7]['hide_on_search']) && !empty($rules[8]['hide_on_categories']), 'Import did not merge old table and postmeta rules with existing search rules.');
+expect(!empty($rules[7]['search']) && !empty($rules[7]['hide_on_search']) && !empty($rules[7]['hide_on_xml_sitemap']) && !empty($rules[8]['hide_on_yoast_breadcrumbs']) && !empty($rules[8]['hide_on_categories']), 'Import did not merge all current table and older postmeta rules.');
+expect($visibility->filter_sitemap([], 'post')['post__not_in'] === [7], 'Core sitemap exclusion was lost.');
+expect($visibility->filter_yoast_breadcrumbs([['id' => 8], ['id' => 7]]) === [1 => ['id' => 7]], 'Yoast breadcrumb exclusion was lost.');
+$edit_request = new class { public function get_param($key) { return $key === 'context' ? 'edit' : null; } };
+expect($visibility->filter_rest([], $edit_request) === [], 'REST edit context must remain visible.');
+expect($visibility->filter_rest_product([], $edit_request) === [], 'WooCommerce REST edit context must remain visible.');
 expect(strpos($message, 'Hide Posts rules copied') !== false, 'Import result missing.');
 $options['whp_data_migrated'] = true;
 $options[JL_WP_Plugins_Pack_Site_Utilities::VISIBILITY_OPTION] = [];
-$import->invoke($visibility);
+$import->invoke($utilities);
 $rules = JL_WP_Plugins_Pack_Site_Utilities::visibility_rules();
 expect(!empty($rules[7]['hide_on_search']) && empty($rules[8]['hide_on_categories']), 'Stale legacy postmeta was imported after table migration.');
 

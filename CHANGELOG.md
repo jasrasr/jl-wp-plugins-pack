@@ -3,7 +3,8 @@
 ## 2026-11-27 - 1.5.5
 
 - Add disabled-by-default Konami Code, YOURLS short-link, custom 404, and combined post visibility utilities under JL Site Utilities.
-- Add explicit imports for the original plugins' saved WordPress options, existing YOURLS post metadata, Search Exclude IDs, and Hide Posts rules. Original plugin data is not removed.
+- Add explicit imports for the original plugins' saved WordPress options, existing YOURLS post metadata, Search Exclude 2.x groups and older IDs, and Hide Posts rules. Original plugin data is not removed.
+- Match Hide Posts 2.1.3 sitemap and Yoast visibility rules, and preserve REST edit access to hidden posts.
 - Pause each replacement while its original plugin is active, and document staged migration and known feature limits.
 
 ## 2026-11-26 - 1.5.4
