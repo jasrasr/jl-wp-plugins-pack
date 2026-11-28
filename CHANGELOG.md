@@ -2,6 +2,7 @@
 
 ## 2026-11-27 - 1.5.7
 
+- Add the tested WordPress version, stable tag, and GPL license metadata to the readme.
 - Refresh the pack icon using the site's blue J and red L logo as the visual reference.
 - Escape Site Utilities page dropdown markup and YOURLS compatibility output reported by the 1.5.6 Plugin Check scan.
 - Sanitize Site Utilities, Post Visibility, and bulk excerpt form arrays; keep nonce verification next to the bulk excerpt request handling.

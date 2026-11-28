@@ -2,6 +2,11 @@
 
 Custom WordPress content utilities for Jason Lamb sites.
 
+Tested up to: 7.1
+Stable tag: 1.5.7
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
 - Website: https://jasonlamb.me
 - GitHub repository: https://github.com/jasrasr/jl-wp-plugins-pack
 - Git Updater: https://github.com/afragen/git-updater
