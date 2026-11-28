@@ -188,10 +188,18 @@ To use JL WP Updater for this pack, install the pack from its release ZIP, insta
 
 ### Manual ZIP upload
 
-1. Download or build `jl-wp-plugins-pack.zip`.
+1. Download or build the install ZIP from `dist/` (for example, `jl-wp-plugins-pack-1.5.6.zip`). The install ZIP omits development dotfiles and `tests/`.
 2. Open `Plugins -> Add New -> Upload Plugin`.
 3. Upload and activate the plugin.
 4. Open `JL WP Plugins Pack -> JL AI Posts` for scheduled AI post setup.
+
+### Plugin Check on LocalWP
+
+Run Plugin Check against the installed ZIP build. A raw repository copy contains `.gitattributes`, `.gitignore`, and PHP regression tests that are development files and can produce findings unrelated to the installed plugin. Version 1.5.6 fixes the four AI Posts output escaping findings reported against the installed version 1.5.3.
+
+The pack's `Update URI` points to GitHub because the current distribution uses Git Updater or JL WP Updater. Plugin Check's `plugin_updater_detected` finding is a WordPress.org directory rule. Do not suppress it to claim WordPress.org readiness; a directory release would need a separate update arrangement and another full review. Keep one update provider assigned to this pack.
+
+The completed LocalWP scan identified poll input handling, which 1.5.6 changes so votes use a server-saved choice count. The scanned plugin files still declared version 1.5.3, so this scan does not verify the 1.5.5 utilities. Ask My Writing prepares its cursor query with bound values; the generated number of placeholders produces a static checker finding, now documented at that query. Its direct file operations support locked, resumable index writes and atomic replacement. These remain subject to LocalWP behavior testing, including access control for the generated `ask-data` directory. The WordPress.org readme metadata, name/slug, and GitHub update policy findings remain open if this pack is submitted to the directory.
 
 ## Scheduled AI posts setup
 

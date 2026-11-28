@@ -2,7 +2,7 @@
 /**
  * Plugin Name: JL WP Plugins Pack
  * Description: WordPress content utilities, including excerpts, hashtag linking, AI-assisted posts, GitHub PowerShell drafts, semantic search, polls, Webstats, and optional site utilities.
- * Version: 1.5.5
+ * Version: 1.5.6
  * Author: Jason Lamb
  * Primary Branch: main
  * GitHub Plugin URI: https://github.com/jasrasr/jl-wp-plugins-pack
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('JL_WP_PLUGINS_PACK_VERSION', '1.5.5');
+define('JL_WP_PLUGINS_PACK_VERSION', '1.5.6');
 define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', __FILE__);
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', plugin_dir_path(__FILE__));
 

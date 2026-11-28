@@ -2,7 +2,7 @@
 define('ABSPATH', __DIR__ . '/');
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', dirname(__DIR__) . '/');
 define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', dirname(__DIR__) . '/jl-wp-plugins-pack.php');
-define('JL_WP_PLUGINS_PACK_VERSION', '1.5.5');
+define('JL_WP_PLUGINS_PACK_VERSION', '1.5.6');
 
 $options = [];
 $post_meta = [];

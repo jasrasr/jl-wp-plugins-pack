@@ -5,6 +5,7 @@ class JL_WP_Plugins_Pack_Baby_Poll {
     const OPTION = 'jl_wp_plugins_pack_poll_votes';
     const LABELS_OPTION = 'jl_wp_plugins_pack_poll_labels';
     const LABEL_OVERRIDES_OPTION = 'jl_wp_plugins_pack_poll_label_overrides';
+    const CHOICE_COUNTS_OPTION = 'jl_wp_plugins_pack_poll_choice_counts';
     const COOKIE = 'jl_poll_voted_';
     const NONCE = 'jl_wp_plugins_pack_poll_vote';
 
@@ -42,6 +43,12 @@ class JL_WP_Plugins_Pack_Baby_Poll {
             $labels[$id] = $options;
             update_option(self::LABELS_OPTION, $labels, false);
         }
+        $choice_counts = get_option(self::CHOICE_COUNTS_OPTION, []);
+        if (!is_array($choice_counts)) $choice_counts = [];
+        if (($choice_counts[$id] ?? null) !== count($options)) {
+            $choice_counts[$id] = count($options);
+            update_option(self::CHOICE_COUNTS_OPTION, $choice_counts, false);
+        }
         $all=get_option(self::OPTION, []);
         $votes=is_array($all[$id]??null)?$all[$id]:[];
         $total=array_sum(array_map('absint',$votes));
@@ -58,7 +65,6 @@ class JL_WP_Plugins_Pack_Baby_Poll {
 </style><h2><?php echo esc_html($question); ?></h2>
         <?php if(!$voted): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
         <input type="hidden" name="action" value="jl_poll_vote"><input type="hidden" name="poll_id" value="<?php echo esc_attr($id); ?>">
-        <input type="hidden" name="poll_options" value="<?php echo esc_attr(wp_json_encode($options)); ?>">
         <?php wp_nonce_field(self::NONCE.$id,'_jl_poll_nonce'); foreach($options as $i=>$label): ?>
         <button name="poll_choice" value="<?php echo esc_attr((string)$i); ?>"><?php echo esc_html($label); ?></button>
         <?php endforeach; ?></form><?php else: ?><p>Thanks for voting!</p><?php endif;
@@ -71,9 +77,15 @@ class JL_WP_Plugins_Pack_Baby_Poll {
     public function vote() {
         $id=isset($_POST['poll_id'])?sanitize_key(wp_unslash($_POST['poll_id'])):'';
         $nonce=isset($_POST['_jl_poll_nonce'])?sanitize_text_field(wp_unslash($_POST['_jl_poll_nonce'])):'';
-        $opts=isset($_POST['poll_options'])?json_decode(wp_unslash($_POST['poll_options']),true):[];
-        $choice=isset($_POST['poll_choice'])?absint($_POST['poll_choice']):-1;
-        if(!$id || !wp_verify_nonce($nonce,self::NONCE.$id) || !is_array($opts) || count($opts)<2 || $choice<0 || $choice>=count($opts)) wp_die('Invalid poll submission.','',['response'=>400]);
+        $choice_counts = get_option(self::CHOICE_COUNTS_OPTION, []);
+        $choice_count = is_array($choice_counts) ? absint($choice_counts[$id] ?? 0) : 0;
+        if (!$choice_count) {
+            $saved_labels = get_option(self::LABELS_OPTION, []);
+            $choice_count = is_array($saved_labels) && isset($saved_labels[$id]) && is_array($saved_labels[$id]) ? count($saved_labels[$id]) : 0;
+        }
+        $raw_choice = isset($_POST['poll_choice']) ? sanitize_text_field(wp_unslash($_POST['poll_choice'])) : '';
+        $choice = ctype_digit($raw_choice) ? absint($raw_choice) : -1;
+        if(!$id || !wp_verify_nonce($nonce,self::NONCE.$id) || $choice_count<2 || $choice_count>8 || $choice<0 || $choice>=$choice_count) wp_die('Invalid poll submission.','',['response'=>400]);
         $cookie=self::COOKIE.substr(hash('sha256',$id),0,16);
         if(!isset($_COOKIE[$cookie])) {
             $all=get_option(self::OPTION,[]); if(!is_array($all))$all=[];
@@ -141,8 +153,11 @@ class JL_WP_Plugins_Pack_Baby_Poll {
                 $overrides[$id] = true;
                 update_option(self::LABEL_OVERRIDES_OPTION, $overrides, false);
             }
-            $counts = isset($_POST['counts']) && is_array($_POST['counts']) ? wp_unslash($_POST['counts']) : [];
-            foreach ($counts as $index => $count) $all[$id][absint($index)] = absint($count);
+            $counts = isset($_POST['counts']) && is_array($_POST['counts']) ? array_map('absint', wp_unslash($_POST['counts'])) : [];
+            foreach ($counts as $index => $count) {
+                $index = absint($index);
+                if ($index < 8) $all[$id][$index] = $count;
+            }
         }
         update_option(self::OPTION, $all, false);
         wp_safe_redirect(admin_url('admin.php?page=jl-polls'));

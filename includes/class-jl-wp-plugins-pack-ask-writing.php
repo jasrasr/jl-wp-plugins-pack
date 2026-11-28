@@ -202,6 +202,8 @@ class JL_WP_Plugins_Pack_Ask_Writing {
         $placeholders = implode(', ', array_fill(0, count($post_types), '%s'));
         $sql = "SELECT ID FROM {$wpdb->posts} WHERE post_status = %s AND post_type IN ({$placeholders}) AND ID > %d ORDER BY ID ASC LIMIT 5";
         $parameters = array_merge(['publish'], $post_types, [(int) $state['last_post_id']]);
+        // The query contains only the WordPress table name and generated placeholders; all values are bound below.
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Dynamic placeholders cannot be expressed as one literal query.
         $post_ids = $wpdb->get_col($wpdb->prepare($sql, $parameters));
         if ($wpdb->last_error) {
             wp_send_json_error(['message' => 'Could not read published posts for indexing.'], 500);

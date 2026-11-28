@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-27 - 1.5.6
+
+- Escape the final AI Posts dropdown markup through a restricted HTML allowlist, resolving four Plugin Check output escaping findings reported against the installed 1.5.3 copy.
+- Validate public poll choices against the server-side count captured when the shortcode renders; sanitize administrator vote totals. Explain the prepared, cursor-based Ask My Writing query to the static SQL checker.
+- Build the install ZIP without development dotfiles and regression tests. The GitHub `Update URI` remains because this distribution uses GitHub based updates; WordPress.org submissions require a separate update strategy.
+
 ## 2026-11-27 - 1.5.5
 
 - Add disabled-by-default Konami Code, YOURLS short-link, custom 404, and combined post visibility utilities under JL Site Utilities.
