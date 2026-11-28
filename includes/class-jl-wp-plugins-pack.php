@@ -70,14 +70,24 @@ class JL_WP_Plugins_Pack {
                 $items = $this->generate_missing_excerpts($selected_word_count, $selected_batch_size, $selected_post_type);
                 $message = 'Preview generated. Review the excerpts below, then approve the ones you want to save.';
             } else {
-                $items = $this->read_review_items($selected_post_type, $errors);
+                $submitted_items = [];
+                if (isset($_POST['items']) && is_array($_POST['items'])) {
+                    // Nested excerpt fields are sanitized here and validated again in read_review_items().
+                    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- map_deep sanitizes each submitted value.
+                    $submitted_items = map_deep(array_slice(wp_unslash($_POST['items']), 0, 100, true), 'sanitize_textarea_field');
+                }
+                $items = $this->read_review_items($selected_post_type, $submitted_items, $errors);
                 $action = is_string($_POST['jl_excerpt_action']) ? sanitize_text_field(wp_unslash($_POST['jl_excerpt_action'])) : '';
                 $targets = [];
                 if (in_array($action, ['approve_all', 'regenerate_all'], true)) {
                     $targets = array_keys($items);
                 } elseif (in_array($action, ['approve_selected', 'regenerate_selected'], true)) {
-                    $selected = isset($_POST['selected']) && is_array($_POST['selected']) ? $_POST['selected'] : [];
-                    $targets = array_intersect(array_keys($items), array_map('absint', array_keys($selected)));
+                    $selected = [];
+                    if (isset($_POST['selected']) && is_array($_POST['selected'])) {
+                        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only absint-normalized array keys become target IDs.
+                        $selected = array_map('absint', array_keys(wp_unslash($_POST['selected'])));
+                    }
+                    $targets = array_intersect(array_keys($items), $selected);
                 } elseif (preg_match('/^(approve|regenerate):([1-9][0-9]*)$/', $action, $matches) && isset($items[(int) $matches[2]])) {
                     $targets = [(int) $matches[2]];
                 }
@@ -411,8 +421,7 @@ class JL_WP_Plugins_Pack {
         return $items;
     }
 
-    private function read_review_items($post_type, &$errors) {
-        $submitted = isset($_POST['items']) && is_array($_POST['items']) ? wp_unslash($_POST['items']) : [];
+    private function read_review_items($post_type, $submitted, &$errors) {
         $items = [];
         foreach (array_slice($submitted, 0, 100, true) as $key => $row) {
             $id = absint($key);

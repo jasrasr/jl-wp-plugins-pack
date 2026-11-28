@@ -2,7 +2,7 @@
 define('ABSPATH', __DIR__ . '/');
 define('JL_WP_PLUGINS_PACK_PLUGIN_DIR', dirname(__DIR__) . '/');
 define('JL_WP_PLUGINS_PACK_PLUGIN_FILE', dirname(__DIR__) . '/jl-wp-plugins-pack.php');
-define('JL_WP_PLUGINS_PACK_VERSION', '1.5.6');
+define('JL_WP_PLUGINS_PACK_VERSION', '1.5.7');
 
 $options = [];
 $post_meta = [];
@@ -67,7 +67,8 @@ class Fake_Query {
 class Fake_DB {
     public $prefix = 'wp_';
     public $postmeta = 'wp_postmeta';
-    public function prepare($sql, ...$args) { return vsprintf(str_replace(['%s', '%d'], ["'%s'", '%d'], $sql), $args); }
+    public function esc_like($value) { return addcslashes($value, '_%\\'); }
+    public function prepare($sql, ...$args) { return vsprintf(str_replace(['%s', '%d', '%i'], ["'%s'", '%d', '`%s`'], $sql), $args); }
     public function get_var($sql) { return 'wp_whp_posts_visibility'; }
     public function get_results($sql, $format) {
         if (strpos($sql, 'whp_posts_visibility') !== false) return [['post_id' => 7, 'condition' => 'hide_on_search'], ['post_id' => 7, 'condition' => 'hide_on_xml_sitemap'], ['post_id' => 8, 'condition' => 'hide_on_yoast_breadcrumbs']];

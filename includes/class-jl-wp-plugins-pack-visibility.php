@@ -88,7 +88,7 @@ class JL_WP_Plugins_Pack_Visibility {
         if (wp_is_post_revision($id) || wp_is_post_autosave($id) || !current_user_can('edit_post', $id)) {
             return;
         }
-        $input = isset($_POST['jl_visibility']) && is_array($_POST['jl_visibility']) ? wp_unslash($_POST['jl_visibility']) : [];
+        $input = isset($_POST['jl_visibility']) && is_array($_POST['jl_visibility']) ? map_deep(wp_unslash($_POST['jl_visibility']), 'sanitize_text_field') : [];
         $selected = [];
         foreach (array_merge(['search'], self::LEGACY_CONDITIONS) as $key) {
             if (!empty($input[$key])) {

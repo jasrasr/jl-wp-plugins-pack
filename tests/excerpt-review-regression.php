@@ -24,6 +24,12 @@ function wp_die($message) { throw new RuntimeException($message); }
 function check_admin_referer() {}
 function wp_nonce_field() {}
 function wp_unslash($value) { return $value; }
+function map_deep($value, $callback) {
+    if (is_array($value)) {
+        return array_map(static function ($item) use ($callback) { return map_deep($item, $callback); }, $value);
+    }
+    return call_user_func($callback, $value);
+}
 function sanitize_text_field($value) { return trim(strip_tags($value)); }
 function sanitize_textarea_field($value) { return trim(strip_tags($value)); }
 function sanitize_key($value) { return preg_replace('/[^a-z0-9_-]/', '', strtolower($value)); }

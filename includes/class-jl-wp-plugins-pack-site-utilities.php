@@ -101,7 +101,7 @@ class JL_WP_Plugins_Pack_Site_Utilities {
             wp_die('You cannot manage site utilities.');
         }
         check_admin_referer('jl_site_utilities_save');
-        $input = isset($_POST['utilities']) && is_array($_POST['utilities']) ? wp_unslash($_POST['utilities']) : [];
+        $input = isset($_POST['utilities']) && is_array($_POST['utilities']) ? map_deep(wp_unslash($_POST['utilities']), 'sanitize_text_field') : [];
         $old = self::settings();
         $new = $old;
         foreach (['konami', 'yourls', 'not_found', 'visibility'] as $feature) {
@@ -208,9 +208,9 @@ class JL_WP_Plugins_Pack_Site_Utilities {
         $rules = self::visibility_rules();
         $count = 0;
         $table = $wpdb->prefix . 'whp_posts_visibility';
-        $has_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
+        $has_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table))) === $table;
         if ($has_table) {
-            $rows = $wpdb->get_results("SELECT post_id, `condition` FROM {$table}", ARRAY_A);
+            $rows = $wpdb->get_results($wpdb->prepare('SELECT post_id, `condition` FROM %i', $table), ARRAY_A);
             foreach ((array) $rows as $row) {
                 $id = absint($row['post_id']);
                 $condition = sanitize_key($row['condition']);
@@ -250,7 +250,12 @@ class JL_WP_Plugins_Pack_Site_Utilities {
         wp_nonce_field('jl_site_utilities_save');
         $this->section('konami', 'Konami Code', $s, 'wp-konami-code/wp-konami-code.php');
         echo '<p>Keyboard: Up Up Down Down Left Right Left Right B A. Touch: swipe the directions, then tap twice.</p>';
-        echo '<p><label>Target page '; wp_dropdown_pages(['name' => 'utilities[konami_page]', 'selected' => $s['konami_page'], 'show_option_none' => 'None', 'option_none_value' => 0]); echo '</label></p>';
+        echo '<p><label>Target page ';
+        echo wp_kses(wp_dropdown_pages(['name' => 'utilities[konami_page]', 'selected' => absint($s['konami_page']), 'show_option_none' => 'None', 'option_none_value' => 0, 'echo' => 0]), [
+            'select' => ['name' => true, 'id' => true, 'class' => true],
+            'option' => ['value' => true, 'selected' => true, 'class' => true, 'disabled' => true],
+        ]);
+        echo '</label></p>';
         echo '<p><label>Or target URL <input class="regular-text" type="url" name="utilities[konami_url]" value="' . esc_attr($s['konami_url']) . '"></label></p>';
         $this->checkbox('konami_noindex', 'Discourage indexing the target page', $s);
         $this->checkbox('konami_hide_search', 'Hide the target page from WordPress search', $s);
@@ -265,7 +270,12 @@ class JL_WP_Plugins_Pack_Site_Utilities {
         }
         echo '</p>';
         $this->section('not_found', 'Custom 404 Page', $s, '404page/404page.php');
-        echo '<p><label>Page to display '; wp_dropdown_pages(['name' => 'utilities[not_found_page]', 'selected' => $s['not_found_page'], 'show_option_none' => 'None', 'option_none_value' => 0]); echo '</label></p>';
+        echo '<p><label>Page to display ';
+        echo wp_kses(wp_dropdown_pages(['name' => 'utilities[not_found_page]', 'selected' => absint($s['not_found_page']), 'show_option_none' => 'None', 'option_none_value' => 0, 'echo' => 0]), [
+            'select' => ['name' => true, 'id' => true, 'class' => true],
+            'option' => ['value' => true, 'selected' => true, 'class' => true, 'disabled' => true],
+        ]);
+        echo '</label></p>';
         $this->checkbox('not_found_hide_search', 'Hide the selected page from WordPress search and core sitemaps', $s);
         $this->checkbox('not_found_force_error', 'Return a 404 when someone opens the selected page directly', $s);
         $this->checkbox('not_found_disable_guess', 'Disable WordPress URL guesses for missing pages', $s);

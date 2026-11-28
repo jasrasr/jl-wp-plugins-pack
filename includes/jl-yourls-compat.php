@@ -13,7 +13,7 @@ if (!function_exists('get_yourls_shortlink')) {
         $url = $post_id ? get_post_meta($post_id, '_yourls_url', true) : '';
         $url = $url ? esc_url($url) : '';
         if ($echo && $url) {
-            echo $url;
+            echo esc_url($url);
         }
         return $url;
     }
@@ -27,7 +27,11 @@ if (!function_exists('yourls_display_box')) {
         }
         $html = '<div class="jl-yourls-box"><label>Short URL <input type="url" readonly value="' . esc_attr($url) . '"></label></div>';
         if ($echo) {
-            echo $html;
+            echo wp_kses($html, [
+                'div' => ['class' => true],
+                'label' => [],
+                'input' => ['type' => true, 'readonly' => true, 'value' => true],
+            ]);
         }
         return $html;
     }

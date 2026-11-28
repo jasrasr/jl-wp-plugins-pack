@@ -1,7 +1,15 @@
 # Changelog
 
+## 2026-11-27 - 1.5.7
+
+- Refresh the pack icon using the site's blue J and red L logo as the visual reference.
+- Escape Site Utilities page dropdown markup and YOURLS compatibility output reported by the 1.5.6 Plugin Check scan.
+- Sanitize Site Utilities, Post Visibility, and bulk excerpt form arrays; keep nonce verification next to the bulk excerpt request handling.
+- Prepare the Hide Posts import table as a WordPress SQL identifier and escape its name in the table existence check. This requires WordPress 6.2 or newer.
+
 ## 2026-11-27 - 1.5.6
 
+- Add 128-pixel and 256-pixel JL plugin icons for Git Updater artwork.
 - Escape the final AI Posts dropdown markup through a restricted HTML allowlist, resolving four Plugin Check output escaping findings reported against the installed 1.5.3 copy.
 - Validate public poll choices against the server-side count captured when the shortcode renders; sanitize administrator vote totals. Explain the prepared, cursor-based Ask My Writing query to the static SQL checker.
 - Build the install ZIP without development dotfiles and regression tests. The GitHub `Update URI` remains because this distribution uses GitHub based updates; WordPress.org submissions require a separate update strategy.
